@@ -1,0 +1,30 @@
+[package]
+name = "desktop-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core GUI framework
+egui = "0.28"
+eframe = { version = "0.28", default-features = true, features = [
+    "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+] }
+
+# Serialization for settings and data
+serde = { version = "1.0", features = ["derive"] }
+
+# Logging
+env_logger = "0.11"
+
+# Async runtime (for future use with network operations)
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+# Error handling
+thiserror = "1.0"
+
+[dev-dependencies]
+# Development tools (install with: cargo install cargo-watch cargo-audit)
+# cargo-watch = "8.0"  # Commented as this is a binary, not a library dependency
+# cargo-audit = "0.18" # Commented as this is a binary, not a library dependency
