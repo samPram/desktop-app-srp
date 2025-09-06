@@ -147,22 +147,90 @@ impl Dashboard {
 
     /// Render the testing panel
     fn render_testing_panel(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            // Left panel - Customer and motorcycle selection
-            ui.vertical(|ui| {
-                ui.set_width(300.0);
-                self.render_customer_selection(ui);
-                ui.separator();
-                self.render_motorcycle_selection(ui);
+        // Show monitoring interface by default (static values)
+        self.render_monitoring_interface(ui);
+    }
+
+    /// Render the monitoring interface with responsive panel layout
+    fn render_monitoring_interface(&mut self, ui: &mut egui::Ui) {
+        // Top panel with title and start button
+        egui::TopBottomPanel::top("dashboard_top_panel")
+            .resizable(false)
+            .min_height(60.0)
+            .show_inside(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.heading("Dyno Testing Monitor");
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("🚀 Start Test").clicked() {
+                            // TODO: Show modal for customer/motorcycle selection
+                        }
+                    });
+                });
             });
 
-            ui.separator();
+        // Left panel with gauges
+        egui::SidePanel::left("dashboard_left_panel")
+            .resizable(true)
+            .default_width(300.0)
+            .width_range(250.0..=400.0)
+            .show_inside(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("Gauges");
+                });
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.vertical_centered(|ui| {
+                        CircularGauge::rpm(self.test_parameters.rpm).show(ui);
+                        CircularGauge::speed(self.test_parameters.speed_kmh).show(ui);
+                    });
+                });
+            });
 
-            // Right panel - Real-time testing interface
-            ui.vertical(|ui| {
-                self.render_testing_interface(ui);
+        // Right panel with values and parameters
+        egui::SidePanel::right("dashboard_right_panel")
+            .resizable(true)
+            .default_width(250.0)
+            .width_range(200.0..=350.0)
+            .show_inside(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("Parameters");
+                });
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ValueDisplay::torque(self.test_parameters.torque_nm, None).show(ui);
+                        ValueDisplay::power(self.test_parameters.power_hp, None).show(ui);
+                        
+                        ui.separator();
+                        
+                        ui.label("Engine Temp:");
+                        ui.label(formatting::format_temperature(
+                            self.test_parameters.engine_temp_c,
+                        ));
+                        
+                        ui.separator();
+                        
+                        ui.label("Air/Fuel Ratio:");
+                        ui.label(formatting::format_afr(self.test_parameters.air_fuel_ratio));
+                    });
+                });
+            });
+
+        // Central panel with performance graph
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.heading("Performance Graph");
+            });
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.separator();
+                    self.performance_graph.show(ui);
+                });
             });
         });
+
+        // Only simulate real-time data updates when testing
+        if self.is_testing {
+            self.simulate_test_data();
+        }
     }
 
     /// Render customer selection

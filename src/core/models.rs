@@ -12,7 +12,7 @@ pub struct Operator {
 }
 
 /// Represents a customer who owns motorcycles for testing
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Customer {
     pub id: u32,
     pub name: String,
@@ -22,7 +22,7 @@ pub struct Customer {
 }
 
 /// Represents a motorcycle to be tested
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Motorcycle {
     pub id: u32,
     pub make: String,

@@ -22,7 +22,7 @@ impl CircularGauge {
             max_value: 12000.0,
             unit: "RPM".to_string(),
             red_zone_start: Some(9000.0), // Red zone starts at 9000 RPM
-            size: 150.0,
+            size: 400.0,
         }
     }
 
@@ -35,20 +35,20 @@ impl CircularGauge {
             max_value: 300.0,
             unit: "km/h".to_string(),
             red_zone_start: None,
-            size: 150.0,
+            size: 400.0,
         }
     }
 
     /// Render the circular gauge
     pub fn show(&self, ui: &mut egui::Ui) {
         let (rect, _response) = ui.allocate_exact_size(
-            egui::vec2(self.size, self.size + 40.0), // Extra space for title and value
+            egui::vec2(self.size, self.size + 60.0), // Extra space for title and value with more spacing
             egui::Sense::hover(),
         );
 
         if ui.is_rect_visible(rect) {
             let painter = ui.painter();
-            let center = rect.center() - egui::vec2(0.0, 20.0); // Adjust for title space
+            let center = rect.center() - egui::vec2(0.0, 20.0); // Adjusted spacing for title
             let radius = self.size * 0.4;
             let inner_radius = radius * 0.7;
 
@@ -66,9 +66,9 @@ impl CircularGauge {
                 egui::Stroke::new(2.0, egui::Color32::DARK_GRAY),
             );
 
-            // Calculate angles for gauge (270 degrees total, starting from bottom left)
-            let start_angle = PI * 1.25; // Start at bottom left
-            let end_angle = PI * 0.25;   // End at bottom right
+            // Calculate angles for gauge (270 degrees total, starting from bottom center, sweeping left-to-right)
+            let start_angle = PI * 1.35; // Start at bottom left (zero position will be at bottom center)
+            let end_angle = PI * 0.15;   // End at bottom right
             let total_angle = 1.5 * PI;  // 270 degrees
 
             // Draw gauge scale marks
@@ -86,8 +86,8 @@ impl CircularGauge {
             painter.circle_filled(center, 8.0, egui::Color32::DARK_GRAY);
             painter.circle_filled(center, 5.0, egui::Color32::WHITE);
 
-            // Draw title above gauge
-            let title_pos = egui::pos2(center.x, rect.top() + 10.0);
+            // Draw title above gauge with more spacing
+            let title_pos = egui::pos2(center.x, rect.top() + 20.0);
             painter.text(
                 title_pos,
                 egui::Align2::CENTER_CENTER,
@@ -116,7 +116,8 @@ impl CircularGauge {
 
         // Draw major marks
         for i in 0..=num_major_marks {
-            let angle = start_angle - (i as f32 / num_major_marks as f32) * total_angle;
+            let zero_angle = PI * 1.5; // Bottom center
+            let angle = zero_angle - (total_angle / 2.0) + ((i as f32 / num_major_marks as f32) * total_angle);
             let outer_point = center + egui::vec2(angle.cos() * radius, angle.sin() * radius);
             let inner_point = center + egui::vec2(angle.cos() * (radius - 15.0), angle.sin() * (radius - 15.0));
             
@@ -139,7 +140,8 @@ impl CircularGauge {
 
         // Draw minor marks
         for i in 0..=num_minor_marks {
-            let angle = start_angle - (i as f32 / num_minor_marks as f32) * total_angle;
+            let zero_angle = PI * 1.5; // Bottom center
+            let angle = zero_angle - (total_angle / 2.0) + ((i as f32 / num_minor_marks as f32) * total_angle);
             let outer_point = center + egui::vec2(angle.cos() * radius, angle.sin() * radius);
             let inner_point = center + egui::vec2(angle.cos() * (radius - 8.0), angle.sin() * (radius - 8.0));
             
@@ -178,7 +180,9 @@ impl CircularGauge {
     /// Draw the needle pointing to current value
     fn draw_needle(&self, painter: &egui::Painter, center: egui::Pos2, inner_radius: f32, start_angle: f32, total_angle: f32) {
         let value_ratio = ((self.value - self.min_value) / (self.max_value - self.min_value)).clamp(0.0, 1.0);
-        let needle_angle = start_angle - value_ratio * total_angle;
+        // Position zero at bottom center (PI * 1.5), then sweep left to right
+        let zero_angle = PI * 1.5; // Bottom center
+        let needle_angle = zero_angle - (total_angle / 2.0) + (value_ratio * total_angle);
         
         let needle_length = inner_radius - 10.0;
         let needle_end = center + egui::vec2(needle_angle.cos() * needle_length, needle_angle.sin() * needle_length);
@@ -234,7 +238,7 @@ impl ValueDisplay {
             
             // Title
             ui.heading(&self.title);
-            ui.add_space(5.0);
+            ui.add_space(12.0);
             
             // Current value (large display)
             let value_text = format!("{:.1}", self.value);
