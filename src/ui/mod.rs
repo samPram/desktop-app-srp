@@ -1,7 +1,9 @@
-//! UI module containing all user interface components and layouts
+pub mod topbar;
+pub mod sidebar;
+pub mod bottombar;
+pub mod status_bar;
+pub mod gauges;
+pub mod chart;
+pub mod cards;
+pub mod info_panel;
 
-pub mod components;
-pub mod main_window;
-
-// Re-export commonly used UI components
-pub use main_window::MainWindow;
