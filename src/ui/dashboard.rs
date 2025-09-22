@@ -1,0 +1,125 @@
+use eframe::egui::{self, Color32, RichText, Stroke};
+use crate::ui::sidebar::{Sidebar, SidebarItem};
+use crate::ui::gauges::CircularGauge;
+use crate::ui::charts::PowerTorqueChart;
+use crate::ui::data_panel::DataPanel;
+use crate::data::models::DynoData;
+
+pub struct Dashboard {
+    sidebar: Sidebar,
+    rpm_gauge: CircularGauge,
+    speed_gauge: CircularGauge,
+    chart: PowerTorqueChart,
+    data_panel: DataPanel,
+}
+
+impl Dashboard {
+    pub fn new() -> Self {
+        Self {
+            sidebar: Sidebar::new(),
+            rpm_gauge: CircularGauge::new("RPM", 0.0, 12000.0, "RPM", Color32::from_rgb(220, 60, 60)),
+            speed_gauge: CircularGauge::new("Speed (km/h)", 0.0, 300.0, "km/h", Color32::from_rgb(60, 120, 220)),
+            chart: PowerTorqueChart::new(),
+            data_panel: DataPanel::new(),
+        }
+    }
+
+    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+        // Set dark theme
+        let mut style = (*ui.ctx().style()).clone();
+        style.visuals.dark_mode = true;
+        style.visuals.override_text_color = Some(Color32::WHITE);
+        style.visuals.panel_fill = Color32::from_rgb(30, 30, 30);
+        style.visuals.window_fill = Color32::from_rgb(25, 25, 25);
+        ui.ctx().set_style(style);
+
+        // Main horizontal layout
+        ui.horizontal(|ui| {
+            // Sidebar
+            egui::Frame::none()
+                .fill(Color32::from_rgb(35, 35, 35))
+                .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
+                .show(ui, |ui| {
+                    self.sidebar.show(ui);
+                });
+
+            ui.separator();
+
+            // Main content area
+            ui.vertical(|ui| {
+                match self.sidebar.selected_item() {
+                    SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+                    _ => {
+                        ui.centered_and_justified(|ui| {
+                            ui.label(RichText::new("Feature coming soon...").size(18.0));
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+        // Status bar at bottom
+        let _available_height = ui.available_height() - 30.0; // Reserve space for status bar
+        
+        ui.horizontal(|ui| {
+            // Left section - gauges and chart
+            ui.vertical(|ui| {
+                ui.set_width(ui.available_width() - 220.0); // Reserve space for data panel
+                
+                // Gauges row
+                ui.horizontal(|ui| {
+                    ui.add_space(20.0);
+                    
+                    // RPM Gauge
+                    ui.vertical(|ui| {
+                        self.rpm_gauge.show(ui, data.rpm);
+                    });
+                    
+                    ui.add_space(40.0);
+                    
+                    // Speed Gauge
+                    ui.vertical(|ui| {
+                        self.speed_gauge.show(ui, data.speed_kmh);
+                    });
+                });
+
+                ui.add_space(20.0);
+
+                // Chart section
+                ui.horizontal(|ui| {
+                    ui.add_space(20.0);
+                    ui.vertical(|ui| {
+                        self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                    });
+                });
+            });
+
+            ui.separator();
+
+            // Right section - data panel
+            ui.vertical(|ui| {
+                ui.add_space(10.0);
+                self.data_panel.show(ui, data);
+            });
+        });
+
+        // Status bar at bottom
+        ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.add_space(10.0);
+                ui.label(RichText::new("Status: Connected to Dyno Hardware. Ready for test.").size(11.0).color(Color32::LIGHT_GRAY));
+                
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add_space(10.0);
+                    ui.label(RichText::new("Disk: 94.4% Free").size(11.0).color(Color32::LIGHT_GRAY));
+                    ui.label(RichText::new("RAM: 2.5GB").size(11.0).color(Color32::LIGHT_GRAY));
+                    ui.label(RichText::new("CPU: 15%").size(11.0).color(Color32::LIGHT_GRAY));
+                });
+            });
+            ui.add_space(5.0);
+        });
+    }
+}

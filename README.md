@@ -13,23 +13,75 @@ A desktop application built with Rust and egui for motorcycle dynamometer testin
 ## Project Structure
 
 ```
-desktop-app/
+dekstop-app/
+├── Cargo.toml
+├── Cargo.lock
+├── README.md
+├── .gitignore
+├── build.rs                    # Build script for resources
+├── icon.ico                    # Application icon
+│
 ├── src/
-│   ├── main.rs              # Application entry point
-│   ├── app.rs               # Main application logic
-│   ├── ui/                  # UI components and layouts
+│   ├── main.rs                 # Entry point
+│   ├── lib.rs                  # Library root
+│   ├── app.rs                  # Main application struct
+│   │
+│   ├── ui/                     # UI components
 │   │   ├── mod.rs
-│   │   ├── main_window.rs
-│   │   └── components/      # Reusable UI components
-│   ├── core/                # Business logic and data models
+│   │   ├── dashboard.rs        # Main dashboard view
+│   │   ├── sidebar.rs          # Navigation sidebar
+│   │   ├── gauges.rs           # RPM and speed gauges
+│   │   ├── charts.rs           # Power/torque charts
+│   │   ├── data_panel.rs       # Live data & sensor readings
+│   │   ├── run_controls.rs     # Test run controls
+│   │   └── styles.rs           # UI styling and themes
+│   │
+│   ├── dyno/                   # Dyno hardware interface
 │   │   ├── mod.rs
-│   │   └── models.rs
-│   └── utils/               # Utility functions and helpers
-├── assets/                  # Static assets (icons, images, etc.)
-├── tests/                   # Integration tests
-├── docs/                    # Documentation
-├── Cargo.toml              # Project configuration and dependencies
-└── README.md               # Project overview
+│   │   ├── hardware.rs         # Hardware abstraction
+│   │   ├── sensors.rs          # Sensor data handling
+│   │   ├── calibration.rs      # Calibration routines
+│   │   └── serial_comm.rs      # Serial communication
+│   │
+│   ├── data/                   # Data management
+│   │   ├── mod.rs
+│   │   ├── models.rs           # Data structures
+│   │   ├── storage.rs          # Data persistence
+│   │   ├── calculations.rs     # Power/torque calculations
+│   │   ├── run_manager.rs      # Test run management
+│   │   └── export.rs           # Data export functionality
+│   │
+│   ├── config/                 # Configuration
+│   │   ├── mod.rs
+│   │   ├── settings.rs         # Application settings
+│   │   ├── dyno_config.rs      # Dyno-specific configuration
+│   │   └── defaults.rs         # Default values
+│   │
+│   └── utils/                  # Utilities
+│       ├── mod.rs
+│       ├── math.rs             # Mathematical utilities
+│       ├── units.rs            # Unit conversions
+│       └── time.rs             # Time utilities
+│
+├── assets/                     # Static assets
+│   ├── fonts/                  # Custom fonts
+│   ├── icons/                  # UI icons
+│   └── themes/                 # Color themes
+│
+├── data/                       # Application data
+│   ├── runs/                   # Saved test runs
+│   ├── configs/                # Configuration files
+│   └── exports/                # Exported data
+│
+├── docs/                       # Documentation
+│   ├── API.md
+│   ├── HARDWARE.md
+│   └── USER_GUIDE.md
+│
+└── tests/                      # Tests
+    ├── integration/
+    ├── unit/
+    └── fixtures/
 ```
 
 ## Prerequisites
