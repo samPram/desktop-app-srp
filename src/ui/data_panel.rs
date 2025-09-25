@@ -30,18 +30,18 @@ impl DataPanel {
 
                 // Create a 3-column grid for sensor readings
                 egui::Grid::new("sensors_grid")
-                    .num_columns(3)
+                    .num_columns(1)
                     .spacing([8.0, 8.0])
                     .show(ui, |ui| {
-                        // First row
-                        self.sensor_card(ui, "Air-Fuel Ratio", "", &format!("{}FR", data.air_fuel_ratio as i32));
-                        self.sensor_card(ui, "Lambda", "", &format!("{:.2}", data.lambda));
-                        self.sensor_card(ui, "Sensor C", "", &format!("{:.1}", 0));
-                        ui.end_row();
 
-                        // Second row
+                        self.sensor_card(ui, "Air-Fuel Ratio", "", &format!("{}FR", data.air_fuel_ratio as i32));
+                        ui.end_row();
+                        self.sensor_card(ui, "Lambda", "", &format!("{:.2}", data.lambda));
+                        ui.end_row();
                         self.sensor_card(ui, "Engine Temp (°C)", "", &format!("{:.1}", data.coolant_temp));
-                        self.sensor_card(ui, "Oil Pressure (°C)", "", &format!("{:.1}", data.oil_pressure_temp));
+                        ui.end_row();
+                        // self.sensor_card(ui, "Oil Pressure (°C)", "", &format!("{:.1}", data.oil_pressure_temp));
+                        // ui.end_row();
                         self.sensor_card(ui, "Intake Temp °C", "", &format!("{:.1}", data.intake_temp));
                         ui.end_row();
                     });
@@ -113,7 +113,7 @@ impl DataPanel {
 
     fn sensor_card(&self, ui: &mut egui::Ui, label: &str, unit_suffix: &str, value: &str) {
         let width = 70.0;
-        let height = 45.0;
+        let height = 50.0;
 
         egui::Frame::none()
             .fill(Color32::from_rgb(35, 35, 35))
@@ -124,7 +124,7 @@ impl DataPanel {
                 ui.set_min_size([width, height].into());
                 ui.vertical_centered(|ui| {
                     // Label
-                    ui.label(RichText::new(label).size(9.0).color(Color32::LIGHT_GRAY));
+                    ui.label(RichText::new(label).size(14.0).color(Color32::LIGHT_GRAY));
                     ui.add_space(2.0);
 
                     // Unit suffix (like AFR)
@@ -135,7 +135,7 @@ impl DataPanel {
                     ui.add_space(2.0);
 
                     // Value
-                    ui.label(RichText::new(value).size(14.0).strong().color(Color32::WHITE));
+                    ui.label(RichText::new(value).size(24.0).strong().color(Color32::WHITE));
                 });
             });
     }
