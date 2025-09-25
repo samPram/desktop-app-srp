@@ -96,17 +96,42 @@ impl PanelLayout {
         }
 
         // Left panel - Navigation Sidebar
+        // if self.show_left_panel {
+        //     egui::SidePanel::left("left_panel")
+        //         .resizable(true)
+        //         .default_width(200.0)
+        //         .width_range(150.0..=250.0)
+        //         .frame(egui::Frame::none()
+        //             .fill(Color32::from_rgb(35, 35, 35))
+        //             .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
+        //         )
+        //         .show_inside(ui, |ui| {
+        //             self.sidebar.show(ui);
+        //         });
+        // }
         if self.show_left_panel {
             egui::SidePanel::left("left_panel")
                 .resizable(true)
-                .default_width(200.0)
-                .width_range(150.0..=250.0)
-                .frame(egui::Frame::none()
-                    .fill(Color32::from_rgb(35, 35, 35))
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
+                .default_width(220.0)  // Match sidebar min width
+                .width_range(150.0..=280.0)
+                .frame(egui::Frame::none()  // Remove frame since sidebar handles styling
+                    .fill(Color32::TRANSPARENT)  // Let sidebar handle background
+                    .stroke(Stroke::NONE)
                 )
                 .show_inside(ui, |ui| {
-                    self.sidebar.show(ui);
+                    if let Some(selected) = self.sidebar.show(ui) {
+                        // Handle navigation changes
+                        match selected {
+                            SidebarItem::Dashboard => { /* switch to dashboard */ },
+                            SidebarItem::DynData => { /* switch to dyn data */ },
+                            SidebarItem::Cepols => { /* switch to cepols */ },
+                            SidebarItem::Runs => { /* switch to runs */ },
+                            SidebarItem::RunHistory => { /* switch to run history */ },
+                            SidebarItem::Reports => { /* switch to reports */ },
+                            SidebarItem::Seports => { /* switch to seports */ },
+                            SidebarItem::Configuration => { /* switch to configuration */ },
+                        }
+                    }
                 });
         }
 
