@@ -5,3 +5,4 @@ pub mod charts;
 pub mod data_panel;
 pub mod run_controls;
 pub mod styles;
+pub mod panels;

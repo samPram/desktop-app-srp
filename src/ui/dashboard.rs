@@ -3,6 +3,7 @@ use crate::ui::sidebar::{Sidebar, SidebarItem};
 use crate::ui::gauges::CircularGauge;
 use crate::ui::charts::PowerTorqueChart;
 use crate::ui::data_panel::DataPanel;
+use crate::ui::panels::PanelLayout;
 use crate::data::models::DynoData;
 
 pub struct Dashboard {
@@ -11,6 +12,8 @@ pub struct Dashboard {
     speed_gauge: CircularGauge,
     chart: PowerTorqueChart,
     data_panel: DataPanel,
+    panel_layout: PanelLayout,
+    use_panel_layout: bool,
 }
 
 impl Dashboard {
@@ -21,6 +24,8 @@ impl Dashboard {
             speed_gauge: CircularGauge::new("Speed (km/h)", 0.0, 300.0, "km/h", Color32::from_rgb(60, 120, 220)),
             chart: PowerTorqueChart::new(),
             data_panel: DataPanel::new(),
+            panel_layout: PanelLayout::new(),
+            use_panel_layout: true,
         }
     }
 
@@ -33,30 +38,36 @@ impl Dashboard {
         style.visuals.window_fill = Color32::from_rgb(25, 25, 25);
         ui.ctx().set_style(style);
 
-        // Main horizontal layout
-        ui.horizontal(|ui| {
-            // Sidebar
-            egui::Frame::none()
-                .fill(Color32::from_rgb(35, 35, 35))
-                .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
-                .show(ui, |ui| {
-                    self.sidebar.show(ui);
-                });
+        // Choose layout mode
+        if self.use_panel_layout {
+            // Panel layout mode - sidebar is integrated in left panel
+            self.panel_layout.show(ui, data);
+        } else {
+            // Classic layout mode - separate sidebar
+            ui.horizontal(|ui| {
+                // Sidebar
+                egui::Frame::none()
+                    .fill(Color32::from_rgb(35, 35, 35))
+                    .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
+                    .show(ui, |ui| {
+                        self.sidebar.show(ui);
+                    });
 
-            ui.separator();
+                ui.separator();
 
-            // Main content area
-            ui.vertical(|ui| {
-                match self.sidebar.selected_item() {
-                    SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
-                    _ => {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(RichText::new("Feature coming soon...").size(18.0));
-                        });
+                // Main content area
+                ui.vertical(|ui| {
+                    match self.sidebar.selected_item() {
+                        SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+                        _ => {
+                            ui.centered_and_justified(|ui| {
+                                ui.label(RichText::new("Feature coming soon...").size(18.0));
+                            });
+                        }
                     }
-                }
+                });
             });
-        });
+        }
     }
 
     fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
@@ -121,5 +132,51 @@ impl Dashboard {
             });
             ui.add_space(5.0);
         });
+    }
+
+    // Panel layout control methods
+    pub fn toggle_panel_layout(&mut self) {
+        self.use_panel_layout = !self.use_panel_layout;
+    }
+
+    pub fn is_using_panel_layout(&self) -> bool {
+        self.use_panel_layout
+    }
+
+    pub fn toggle_top_panel(&mut self) {
+        self.panel_layout.toggle_top_panel();
+    }
+
+    pub fn toggle_left_panel(&mut self) {
+        self.panel_layout.toggle_left_panel();
+    }
+
+    pub fn toggle_right_panel(&mut self) {
+        self.panel_layout.toggle_right_panel();
+    }
+
+    pub fn toggle_bottom_panel(&mut self) {
+        self.panel_layout.toggle_bottom_panel();
+    }
+
+    pub fn reset_panel_layout(&mut self) {
+        self.panel_layout.reset_layout();
+    }
+
+    // Panel visibility getters
+    pub fn is_top_panel_visible(&self) -> bool {
+        self.panel_layout.is_top_panel_visible()
+    }
+
+    pub fn is_left_panel_visible(&self) -> bool {
+        self.panel_layout.is_left_panel_visible()
+    }
+
+    pub fn is_right_panel_visible(&self) -> bool {
+        self.panel_layout.is_right_panel_visible()
+    }
+
+    pub fn is_bottom_panel_visible(&self) -> bool {
+        self.panel_layout.is_bottom_panel_visible()
     }
 }
