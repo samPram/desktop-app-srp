@@ -4,11 +4,8 @@ use eframe::egui::{self, Color32, RichText, Stroke, Rounding, Vec2, Margin, Fram
 pub enum SidebarItem {
     Dashboard,
     DynData,
-    Cepols,
-    Runs,
     RunHistory,
     Reports,
-    Seports,
     Configuration,
 }
 

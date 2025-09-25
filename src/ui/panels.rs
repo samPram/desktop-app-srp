@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, RichText, Stroke};
+use eframe::egui::{self, Color32, RichText, Stroke, Rounding, Vec2, Margin, Frame};
 use crate::ui::gauges::CircularGauge;
 use crate::ui::charts::PowerTorqueChart;
 use crate::ui::data_panel::DataPanel;
@@ -124,11 +124,8 @@ impl PanelLayout {
                         match selected {
                             SidebarItem::Dashboard => { /* switch to dashboard */ },
                             SidebarItem::DynData => { /* switch to dyn data */ },
-                            SidebarItem::Cepols => { /* switch to cepols */ },
-                            SidebarItem::Runs => { /* switch to runs */ },
                             SidebarItem::RunHistory => { /* switch to run history */ },
                             SidebarItem::Reports => { /* switch to reports */ },
-                            SidebarItem::Seports => { /* switch to seports */ },
                             SidebarItem::Configuration => { /* switch to configuration */ },
                         }
                     }
@@ -139,21 +136,20 @@ impl PanelLayout {
         if self.show_right_panel {
             egui::SidePanel::right("right_panel")
                 .resizable(true)
-                .default_width(250.0)
-                .width_range(200.0..=300.0)
+                .default_width(280.0)  // Slightly wider to accommodate the grid layout
+                .width_range(260.0..=320.0)
                 .frame(egui::Frame::none()
-                    .fill(Color32::from_rgb(30, 30, 30))
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(50, 50, 50)))
+                    .fill(Color32::from_rgb(25, 25, 25))  // Darker background to match screenshot
+                    .stroke(Stroke::new(1.0, Color32::from_rgb(45, 45, 45)))
                 )
                 .show_inside(ui, |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.vertical_centered(|ui| {
-                            ui.add_space(10.0);
-                            ui.heading(RichText::new("Data").size(18.0).color(Color32::WHITE));
-                            ui.add_space(10.0);
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, true])
+                        .show(ui, |ui| {
+                            ui.add_space(15.0);
+                            self.data_panel.show(ui, data);
+                            ui.add_space(15.0);
                         });
-                        self.data_panel.show(ui, data);
-                    });
                 });
         }
 
@@ -165,7 +161,12 @@ impl PanelLayout {
             )
             .show_inside(ui, |ui| {
                 match self.sidebar.selected_item() {
-                    SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+                    SidebarItem::Dashboard => {
+
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            self.show_dashboard_content(ui, data);
+                        });
+                    },
                     _ => {
                         ui.centered_and_justified(|ui| {
                             ui.label(RichText::new("Feature coming soon...").size(18.0));
@@ -176,39 +177,267 @@ impl PanelLayout {
     }
 
     fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
-        ui.vertical(|ui| {
-            // Gauges section
-            ui.horizontal(|ui| {
-                ui.add_space(20.0);
-                
-                // Left gauge column
-                ui.vertical(|ui| {
-                    ui.add_space(20.0);
-                    ui.heading(RichText::new("RPM").size(16.0).color(Color32::WHITE));
-                    self.rpm_gauge.show(ui, data.rpm);
+        // Main dashboard container with proper responsive sizing
+        ui.vertical_centered(|ui| {
+            ui.add_space(20.0);
+
+            // Top section - Gauges Card (responsive width)
+            self.show_gauges_card(ui, data);
+
+            ui.add_space(20.0);
+
+            // Middle section - Chart Card (responsive width)
+            self.show_chart_card(ui, data);
+
+            ui.add_space(20.0);
+
+            // Bottom section - Performance Values Cards (responsive layout)
+            self.show_performance_cards(ui, data);
+
+            ui.add_space(20.0);
+        });
+    }
+
+    fn show_gauges_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+        // Calculate responsive width with padding
+        let available_width = ui.available_width();
+        let max_card_width = 800.0;
+        let card_width = available_width.min(max_card_width) - 40.0; // Padding on sides
+        
+        // Center the card
+        ui.horizontal(|ui| {
+            let padding = (available_width - card_width).max(0.0) / 2.0;
+            ui.add_space(padding);
+            
+            // Gauges container card
+            let card_frame = Frame::none()
+                .fill(Color32::from_rgb(40, 40, 45))
+                .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
+                .rounding(Rounding::same(12.0))
+                .inner_margin(Margin::same(20.0));
+
+            card_frame.show(ui, |ui| {
+                ui.set_width(card_width);
+
+                // Card header
+                ui.vertical_centered(|ui| {
+                    ui.label(RichText::new("Engine Monitoring").size(18.0).strong().color(Color32::WHITE));
+                    ui.add_space(5.0);
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("●").size(12.0).color(Color32::from_rgb(0, 255, 0)));
+                        ui.label(RichText::new("Connected to Dyno Hardware. Ready for test.").size(12.0).color(Color32::LIGHT_GRAY));
+                    });
                 });
-                
-                ui.add_space(50.0);
-                
-                // Right gauge column  
-                ui.vertical(|ui| {
-                    ui.add_space(20.0);
-                    ui.heading(RichText::new("Speed").size(16.0).color(Color32::WHITE));
-                    self.speed_gauge.show(ui, data.speed_kmh);
-                });
-                
-                ui.add_space(20.0);
+
+                ui.add_space(15.0);
+                ui.separator();
+                ui.add_space(15.0);
+
+                // Responsive gauge layout
+                if card_width > 500.0 {
+                    // Wide layout - horizontal
+                    ui.horizontal_centered(|ui| {
+                        // RPM Gauge
+                        ui.vertical(|ui| {
+                            ui.vertical_centered(|ui| {
+                                ui.label(RichText::new("RPM").size(16.0).strong().color(Color32::WHITE));
+                            });
+                            ui.add_space(10.0);
+                            self.rpm_gauge.show(ui, data.rpm);
+                        });
+
+                        ui.add_space(40.0);
+
+                        // Speed Gauge
+                        ui.vertical(|ui| {
+                            ui.vertical_centered(|ui| {
+                                ui.label(RichText::new("Speed (km/h)").size(16.0).strong().color(Color32::WHITE));
+                            });
+                            ui.add_space(10.0);
+                            self.speed_gauge.show(ui, data.speed_kmh);
+                        });
+                    });
+                } else {
+                    // Narrow layout - vertical
+                    ui.vertical_centered(|ui| {
+                        // RPM Gauge
+                        ui.vertical_centered(|ui| {
+                            ui.label(RichText::new("RPM").size(16.0).strong().color(Color32::WHITE));
+                            ui.add_space(10.0);
+                            self.rpm_gauge.show(ui, data.rpm);
+                        });
+
+                        ui.add_space(20.0);
+
+                        // Speed Gauge
+                        ui.vertical_centered(|ui| {
+                            ui.label(RichText::new("Speed (km/h)").size(16.0).strong().color(Color32::WHITE));
+                            ui.add_space(10.0);
+                            self.speed_gauge.show(ui, data.speed_kmh);
+                        });
+                    });
+                }
             });
+        });
+    }
 
-            ui.add_space(30.0);
+    fn show_chart_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+        // Calculate responsive width with padding
+        let available_width = ui.available_width();
+        let max_card_width = 900.0;
+        let card_width = available_width.min(max_card_width) - 40.0; // Padding on sides
+        
+        // Center the card
+        ui.horizontal(|ui| {
+            let padding = (available_width - card_width).max(0.0) / 2.0;
+            ui.add_space(padding);
+            
+            // Chart container card
+            let card_frame = Frame::none()
+                .fill(Color32::from_rgb(40, 40, 45))
+                .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
+                .rounding(Rounding::same(12.0))
+                .inner_margin(Margin::same(20.0));
 
-            // Chart section
-            ui.vertical_centered(|ui| {
-                ui.heading(RichText::new("Power & Torque Chart").size(18.0).color(Color32::WHITE));
-                ui.add_space(20.0);
+            card_frame.show(ui, |ui| {
+                ui.set_width(card_width);
                 
-                ui.horizontal_centered(|ui| {
-                    self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                // Chart header
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Power & Torque Curves").size(18.0).strong().color(Color32::WHITE));
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // Legend (responsive)
+                        if card_width > 600.0 {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new("Torque").size(12.0).color(Color32::LIGHT_GRAY));
+                                ui.label(RichText::new("●").size(14.0).color(Color32::from_rgb(70, 130, 255)));
+                                ui.add_space(15.0);
+                                ui.label(RichText::new("Horsepower").size(12.0).color(Color32::LIGHT_GRAY));
+                                ui.label(RichText::new("●").size(14.0).color(Color32::from_rgb(255, 70, 70)));
+                            });
+                        }
+                    });
+                });
+
+                ui.add_space(15.0);
+                ui.separator();
+                ui.add_space(15.0);
+
+                // Chart area - responsive sizing
+                ui.vertical_centered(|ui| {
+                    ui.allocate_ui(Vec2::new(card_width - 40.0, 300.0), |ui| {
+                        self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                    });
+                });
+            });
+        });
+    }
+
+    fn show_performance_cards(&self, ui: &mut egui::Ui, _data: &DynoData) {
+        // Calculate responsive layout for performance cards
+        let available_width = ui.available_width();
+        let card_width = 200.0;
+        let spacing = 20.0;
+        let total_cards_width = (card_width * 2.0) + spacing;
+        
+        // Center the performance cards
+        ui.horizontal(|ui| {
+            let padding = (available_width - total_cards_width).max(0.0) / 2.0;
+            ui.add_space(padding);
+            
+            if available_width > total_cards_width + 40.0 {
+                // Wide layout - horizontal
+                ui.horizontal(|ui| {
+                    // Peak Horsepower card
+                    self.show_performance_value_card(
+                        ui,
+                        "Peak Horsepower",
+                        "125.7",
+                        "HP",
+                        Color32::from_rgb(220, 80, 80),
+                        Color32::from_rgb(255, 100, 100)
+                    );
+
+                    ui.add_space(spacing);
+
+                    // Peak Torque card
+                    self.show_performance_value_card(
+                        ui,
+                        "Peak Torque",
+                        "98.3",
+                        "Nm",
+                        Color32::from_rgb(70, 130, 220),
+                        Color32::from_rgb(90, 150, 255)
+                    );
+                });
+            } else {
+                // Narrow layout - vertical
+                ui.vertical_centered(|ui| {
+                    // Peak Horsepower card
+                    self.show_performance_value_card(
+                        ui,
+                        "Peak Horsepower",
+                        "125.7",
+                        "HP",
+                        Color32::from_rgb(220, 80, 80),
+                        Color32::from_rgb(255, 100, 100)
+                    );
+
+                    ui.add_space(spacing);
+
+                    // Peak Torque card
+                    self.show_performance_value_card(
+                        ui,
+                        "Peak Torque",
+                        "98.3",
+                        "Nm",
+                        Color32::from_rgb(70, 130, 220),
+                        Color32::from_rgb(90, 150, 255)
+                    );
+                });
+            }
+        });
+    }
+
+    fn show_performance_value_card(&self, ui: &mut egui::Ui, title: &str, value: &str, unit: &str, bg_color: Color32, accent_color: Color32) {
+        let card_frame = Frame::none()
+            .fill(bg_color)
+            .stroke(Stroke::NONE)
+            .rounding(Rounding::same(15.0))
+            .inner_margin(Margin::same(25.0));
+
+        card_frame.show(ui, |ui| {
+            ui.set_min_size(Vec2::new(200.0, 140.0));
+
+            ui.vertical(|ui| {
+                // Progress indicator at top
+                let progress_rect = ui.allocate_space(Vec2::new(150.0, 6.0)).1;
+                ui.painter().rect_filled(
+                    progress_rect,
+                    Rounding::same(3.0),
+                    accent_color
+                );
+
+                ui.add_space(20.0);
+
+                // Title
+                ui.vertical_centered(|ui| {
+                    ui.label(RichText::new(title).size(14.0).color(Color32::WHITE).strong());
+                });
+
+                ui.add_space(15.0);
+
+                // Large value display
+                ui.vertical_centered(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(value).size(42.0).strong().color(Color32::WHITE));
+                        ui.add_space(8.0);
+                        ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                            ui.add_space(8.0); // Align with baseline
+                            ui.label(RichText::new(unit).size(20.0).color(Color32::from_rgba_premultiplied(255, 255, 255, 180)));
+                        });
+                    });
                 });
             });
         });
@@ -255,8 +484,5 @@ impl PanelLayout {
         self.show_bottom_panel
     }
 
-    // Sidebar delegation methods
-    pub fn selected_item(&self) -> SidebarItem {
-        self.sidebar.selected_item().clone()
-    }
+
 }

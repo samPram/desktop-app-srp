@@ -73,23 +73,23 @@ impl Dashboard {
     fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
         // Status bar at bottom
         let _available_height = ui.available_height() - 30.0; // Reserve space for status bar
-        
+
         ui.horizontal(|ui| {
             // Left section - gauges and chart
             ui.vertical(|ui| {
                 ui.set_width(ui.available_width() - 220.0); // Reserve space for data panel
-                
+
                 // Gauges row
                 ui.horizontal(|ui| {
                     ui.add_space(20.0);
-                    
+
                     // RPM Gauge
                     ui.vertical(|ui| {
                         self.rpm_gauge.show(ui, data.rpm);
                     });
-                    
+
                     ui.add_space(40.0);
-                    
+
                     // Speed Gauge
                     ui.vertical(|ui| {
                         self.speed_gauge.show(ui, data.speed_kmh);
@@ -122,7 +122,7 @@ impl Dashboard {
             ui.horizontal(|ui| {
                 ui.add_space(10.0);
                 ui.label(RichText::new("Status: Connected to Dyno Hardware. Ready for test.").size(11.0).color(Color32::LIGHT_GRAY));
-                
+
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.add_space(10.0);
                     ui.label(RichText::new("Disk: 94.4% Free").size(11.0).color(Color32::LIGHT_GRAY));

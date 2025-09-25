@@ -19,6 +19,7 @@ pub struct DynoData {
     pub motorcycle: String,
     pub power_curve: Vec<(f32, f32)>, // (RPM, HP)
     pub torque_curve: Vec<(f32, f32)>, // (RPM, Torque)
+    pub oil_pressure_temp: f32,
     last_update: Instant,
 }
 
@@ -43,6 +44,7 @@ impl DynoData {
             power_curve: Self::generate_power_curve(),
             torque_curve: Self::generate_torque_curve(),
             last_update: Instant::now(),
+            oil_pressure_temp: 65.0,
         }
     }
 
