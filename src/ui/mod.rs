@@ -1,8 +1,10 @@
-pub mod dashboard;
-pub mod sidebar;
-pub mod gauges;
 pub mod charts;
+pub mod dashboard;
 pub mod data_panel;
-pub mod run_controls;
-pub mod styles;
+pub mod gauges;
 pub mod panels;
+mod rpm_gauge;
+pub mod run_controls;
+pub mod sidebar;
+mod speed_gauge;
+pub mod styles;

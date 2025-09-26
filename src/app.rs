@@ -1,6 +1,6 @@
-use eframe::egui;
-use crate::ui::dashboard::Dashboard;
 use crate::data::models::DynoData;
+use crate::ui::dashboard::Dashboard;
+use eframe::egui;
 
 pub struct DesktopApp {
     dashboard: Dashboard,
@@ -25,11 +25,14 @@ impl eframe::App for DesktopApp {
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("View", |ui| {
-                    if ui.button(if self.dashboard.is_using_panel_layout() { 
-                        "Switch to Classic Layout" 
-                    } else { 
-                        "Switch to Panel Layout" 
-                    }).clicked() {
+                    if ui
+                        .button(if self.dashboard.is_using_panel_layout() {
+                            "Switch to Classic Layout"
+                        } else {
+                            "Switch to Panel Layout"
+                        })
+                        .clicked()
+                    {
                         self.dashboard.toggle_panel_layout();
                         ui.close_menu();
                     }
@@ -37,27 +40,27 @@ impl eframe::App for DesktopApp {
                     if self.dashboard.is_using_panel_layout() {
                         ui.separator();
                         ui.label("Panel Visibility:");
-                        
+
                         let mut top_visible = self.dashboard.is_top_panel_visible();
                         if ui.checkbox(&mut top_visible, "Top Panel").clicked() {
                             self.dashboard.toggle_top_panel();
                         }
-                        
+
                         let mut left_visible = self.dashboard.is_left_panel_visible();
                         if ui.checkbox(&mut left_visible, "Left Panel").clicked() {
                             self.dashboard.toggle_left_panel();
                         }
-                        
+
                         let mut right_visible = self.dashboard.is_right_panel_visible();
                         if ui.checkbox(&mut right_visible, "Right Panel").clicked() {
                             self.dashboard.toggle_right_panel();
                         }
-                        
+
                         let mut bottom_visible = self.dashboard.is_bottom_panel_visible();
                         if ui.checkbox(&mut bottom_visible, "Bottom Panel").clicked() {
                             self.dashboard.toggle_bottom_panel();
                         }
-                        
+
                         ui.separator();
                         if ui.button("Reset Layout").clicked() {
                             self.dashboard.reset_panel_layout();

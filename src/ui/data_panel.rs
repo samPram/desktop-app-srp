@@ -1,7 +1,7 @@
+use crate::data::models::DynoData;
 use eframe::egui::{self, Color32, RichText, Stroke};
 use eframe::epaint::Margin;
 use egui::Frame;
-use crate::data::models::DynoData;
 
 pub struct DataPanel;
 
@@ -11,8 +11,7 @@ impl DataPanel {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui, data: &DynoData) {
-        let sidebar_frame = Frame::none()
-            .inner_margin(Margin::same(0.0));
+        let sidebar_frame = Frame::none().inner_margin(Margin::same(0.0));
 
         sidebar_frame.show(ui, |ui| {
             ui.vertical(|ui| {
@@ -20,7 +19,11 @@ impl DataPanel {
 
                 // Main title
                 ui.vertical_centered(|ui| {
-                    ui.heading(RichText::new("Live Data & Test Info").size(18.0).color(Color32::WHITE));
+                    ui.heading(
+                        RichText::new("Live Data & Test Info")
+                            .size(18.0)
+                            .color(Color32::WHITE),
+                    );
                     ui.add_space(20.0);
                 });
 
@@ -33,23 +36,42 @@ impl DataPanel {
                     .num_columns(1)
                     .spacing([8.0, 8.0])
                     .show(ui, |ui| {
-
-                        self.sensor_card(ui, "Air-Fuel Ratio", "", &format!("{}FR", data.air_fuel_ratio as i32));
+                        self.sensor_card(
+                            ui,
+                            "Air-Fuel Ratio",
+                            "",
+                            &format!("{}FR", data.air_fuel_ratio as i32),
+                        );
                         ui.end_row();
                         self.sensor_card(ui, "Lambda", "", &format!("{:.2}", data.lambda));
                         ui.end_row();
-                        self.sensor_card(ui, "Engine Temp (°C)", "", &format!("{:.1}", data.coolant_temp));
+                        self.sensor_card(
+                            ui,
+                            "Engine Temp (°C)",
+                            "",
+                            &format!("{:.1}", data.coolant_temp),
+                        );
                         ui.end_row();
                         // self.sensor_card(ui, "Oil Pressure (°C)", "", &format!("{:.1}", data.oil_pressure_temp));
                         // ui.end_row();
-                        self.sensor_card(ui, "Intake Temp °C", "", &format!("{:.1}", data.intake_temp));
+                        self.sensor_card(
+                            ui,
+                            "Intake Temp °C",
+                            "",
+                            &format!("{:.1}", data.intake_temp),
+                        );
                         ui.end_row();
                     });
 
                 ui.add_space(20.0);
 
                 // Oil Pressure section
-                ui.label(RichText::new("Oil Pressure (psi)").size(14.0).strong().color(Color32::WHITE));
+                ui.label(
+                    RichText::new("Oil Pressure (psi)")
+                        .size(14.0)
+                        .strong()
+                        .color(Color32::WHITE),
+                );
                 ui.add_space(8.0);
 
                 // Large oil pressure reading
@@ -60,7 +82,12 @@ impl DataPanel {
                     .inner_margin(egui::Margin::symmetric(15.0, 12.0))
                     .show(ui, |ui| {
                         ui.vertical_centered(|ui| {
-                            ui.label(RichText::new(&format!("{:.2}", data.oil_pressure)).size(24.0).strong().color(Color32::WHITE));
+                            ui.label(
+                                RichText::new(&format!("{:.2}", data.oil_pressure))
+                                    .size(24.0)
+                                    .strong()
+                                    .color(Color32::WHITE),
+                            );
                         });
                     });
 
@@ -74,7 +101,7 @@ impl DataPanel {
                         "Peak Horsepower",
                         &format!("{:.1}", data.peak_hp),
                         "HP",
-                        Color32::from_rgb(180, 50, 50)
+                        Color32::from_rgb(180, 50, 50),
                     );
 
                     ui.add_space(12.0);
@@ -85,14 +112,19 @@ impl DataPanel {
                         "Peak Torque",
                         &format!("{:.1}", data.peak_torque),
                         "Nm",
-                        Color32::from_rgb(50, 100, 180)
+                        Color32::from_rgb(50, 100, 180),
                     );
                 });
 
                 ui.add_space(20.0);
 
                 // Test Information section
-                ui.label(RichText::new("Test Information").size(16.0).strong().color(Color32::WHITE));
+                ui.label(
+                    RichText::new("Test Information")
+                        .size(16.0)
+                        .strong()
+                        .color(Color32::WHITE),
+                );
                 ui.add_space(10.0);
 
                 // Test info items
@@ -104,11 +136,15 @@ impl DataPanel {
                 ui.add_space(20.0);
             });
         });
-
     }
 
     fn section_header(&self, ui: &mut egui::Ui, title: &str) {
-        ui.label(RichText::new(title).size(12.0).strong().color(Color32::LIGHT_GRAY));
+        ui.label(
+            RichText::new(title)
+                .size(12.0)
+                .strong()
+                .color(Color32::LIGHT_GRAY),
+        );
     }
 
     fn sensor_card(&self, ui: &mut egui::Ui, label: &str, unit_suffix: &str, value: &str) {
@@ -135,12 +171,24 @@ impl DataPanel {
                     ui.add_space(2.0);
 
                     // Value
-                    ui.label(RichText::new(value).size(24.0).strong().color(Color32::WHITE));
+                    ui.label(
+                        RichText::new(value)
+                            .size(24.0)
+                            .strong()
+                            .color(Color32::WHITE),
+                    );
                 });
             });
     }
 
-    fn large_metric_card(&self, ui: &mut egui::Ui, title: &str, value: &str, unit: &str, color: Color32) {
+    fn large_metric_card(
+        &self,
+        ui: &mut egui::Ui,
+        title: &str,
+        value: &str,
+        unit: &str,
+        color: Color32,
+    ) {
         let available_width = ui.available_width();
 
         egui::Frame::none()
@@ -158,7 +206,12 @@ impl DataPanel {
                     // Value and unit
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
-                        ui.label(RichText::new(value).size(28.0).strong().color(Color32::WHITE));
+                        ui.label(
+                            RichText::new(value)
+                                .size(28.0)
+                                .strong()
+                                .color(Color32::WHITE),
+                        );
                         ui.label(RichText::new(unit).size(16.0).color(Color32::LIGHT_GRAY));
                     });
                 });

@@ -1,11 +1,10 @@
-
 use eframe::egui;
 
 mod app;
-mod ui;
+mod config;
 mod data;
 mod dyno;
-mod config;
+mod ui;
 mod utils;
 
 fn main() -> Result<(), eframe::Error> {

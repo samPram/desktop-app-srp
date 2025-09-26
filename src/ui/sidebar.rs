@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, RichText, Stroke, Rounding, Vec2, Margin, Frame};
+use eframe::egui::{self, Color32, Frame, Margin, RichText, Rounding, Stroke, Vec2};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SidebarItem {
@@ -43,12 +43,12 @@ impl Sidebar {
                         RichText::new("SRP Dyno Test")
                             .size(22.0)
                             .strong()
-                            .color(Color32::from_rgb(255, 255, 255))
+                            .color(Color32::from_rgb(255, 255, 255)),
                     );
                     ui.label(
                         RichText::new("v1.0.0")
                             .size(11.0)
-                            .color(Color32::from_rgb(160, 160, 160))
+                            .color(Color32::from_rgb(160, 160, 160)),
                     );
                     ui.add_space(25.0);
                 });
@@ -108,7 +108,8 @@ impl Sidebar {
                 // });
                 // ui.add_space(10.0);
 
-                if self.nav_item_with_icon(ui, "🔧", "Configuration", SidebarItem::Configuration) {
+                if self.nav_item_with_icon(ui, "🔧", "Configuration", SidebarItem::Configuration)
+                {
                     selected_item = Some(SidebarItem::Configuration);
                 }
 
@@ -120,7 +121,13 @@ impl Sidebar {
         selected_item
     }
 
-    fn nav_item_with_icon(&mut self, ui: &mut egui::Ui, icon: &str, text: &str, item: SidebarItem) -> bool {
+    fn nav_item_with_icon(
+        &mut self,
+        ui: &mut egui::Ui,
+        icon: &str,
+        text: &str,
+        item: SidebarItem,
+    ) -> bool {
         let is_selected = self.selected_item == item;
         let mut clicked = false;
 
@@ -142,10 +149,8 @@ impl Sidebar {
         ui.horizontal(|ui| {
             ui.add_space(15.0);
 
-            let button_response = ui.allocate_response(
-                Vec2::new(190.0, 40.0),
-                egui::Sense::click(),
-            );
+            let button_response =
+                ui.allocate_response(Vec2::new(190.0, 40.0), egui::Sense::click());
 
             // Draw background with hover effect
             let bg_fill = if button_response.hovered() && !is_selected {
@@ -155,11 +160,8 @@ impl Sidebar {
             };
 
             if bg_fill != Color32::TRANSPARENT {
-                ui.painter().rect_filled(
-                    button_response.rect,
-                    Rounding::same(6.0),
-                    bg_fill,
-                );
+                ui.painter()
+                    .rect_filled(button_response.rect, Rounding::same(6.0), bg_fill);
             }
 
             // Draw selection indicator (left border)
@@ -232,7 +234,7 @@ impl Sidebar {
                 egui::Button::new(RichText::new(text).color(text_color).size(14.0))
                     .fill(button_color)
                     .stroke(Stroke::NONE)
-                    .rounding(Rounding::same(6.0))
+                    .rounding(Rounding::same(6.0)),
             );
 
             if response.clicked() {

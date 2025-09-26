@@ -26,11 +26,9 @@ impl CircularGauge {
 
     pub fn show(&mut self, ui: &mut egui::Ui, value: f32) {
         self.value = value;
-        
-        let (response, painter) = ui.allocate_painter(
-            Vec2::splat(self.size + 40.0),
-            egui::Sense::hover()
-        );
+
+        let (response, painter) =
+            ui.allocate_painter(Vec2::splat(self.size + 40.0), egui::Sense::hover());
 
         let center = response.rect.center();
         let radius = self.size * 0.4;
@@ -40,7 +38,7 @@ impl CircularGauge {
         painter.circle_stroke(
             center,
             radius,
-            Stroke::new(3.0, Color32::from_rgb(60, 60, 60))
+            Stroke::new(3.0, Color32::from_rgb(60, 60, 60)),
         );
 
         // Value arc calculation
@@ -51,7 +49,15 @@ impl CircularGauge {
 
         // Draw the value arc
         if normalized_value > 0.0 {
-            self.draw_arc(&painter, center, radius, start_angle, end_angle, self.color, 4.0);
+            self.draw_arc(
+                &painter,
+                center,
+                radius,
+                start_angle,
+                end_angle,
+                self.color,
+                4.0,
+            );
         }
 
         // Draw tick marks
@@ -70,13 +76,13 @@ impl CircularGauge {
         } else {
             format!("{:.1}", self.value)
         };
-        
+
         painter.text(
             center + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_CENTER,
             &value_text,
             egui::FontId::proportional(24.0),
-            Color32::WHITE
+            Color32::WHITE,
         );
 
         // Unit text
@@ -85,7 +91,7 @@ impl CircularGauge {
             egui::Align2::CENTER_CENTER,
             &self.unit,
             egui::FontId::proportional(12.0),
-            Color32::LIGHT_GRAY
+            Color32::LIGHT_GRAY,
         );
 
         // Title text below gauge
@@ -94,41 +100,50 @@ impl CircularGauge {
             egui::Align2::CENTER_CENTER,
             &self.title,
             egui::FontId::proportional(14.0),
-            Color32::WHITE
+            Color32::WHITE,
         );
 
         // Min/Max labels
         let min_pos = center + Vec2::new(-radius * 0.8, radius * 0.4);
         let max_pos = center + Vec2::new(radius * 0.8, radius * 0.4);
-        
+
         painter.text(
             min_pos,
             egui::Align2::CENTER_CENTER,
             &format!("{}", self.min_value as i32),
             egui::FontId::proportional(10.0),
-            Color32::GRAY
+            Color32::GRAY,
         );
-        
+
         painter.text(
             max_pos,
             egui::Align2::CENTER_CENTER,
             &format!("{}", self.max_value as i32),
             egui::FontId::proportional(10.0),
-            Color32::GRAY
+            Color32::GRAY,
         );
     }
 
-    fn draw_arc(&self, painter: &egui::Painter, center: Pos2, radius: f32, start_angle: f32, end_angle: f32, color: Color32, width: f32) {
+    fn draw_arc(
+        &self,
+        painter: &egui::Painter,
+        center: Pos2,
+        radius: f32,
+        start_angle: f32,
+        end_angle: f32,
+        color: Color32,
+        width: f32,
+    ) {
         let steps = 50;
         let angle_step = (end_angle - start_angle) / steps as f32;
-        
+
         for i in 0..steps {
             let angle1 = start_angle + (i as f32) * angle_step;
             let angle2 = start_angle + ((i + 1) as f32) * angle_step;
-            
+
             let p1 = center + Vec2::new(angle1.cos() * radius, angle1.sin() * radius);
             let p2 = center + Vec2::new(angle2.cos() * radius, angle2.sin() * radius);
-            
+
             painter.line_segment([p1, p2], Stroke::new(width, color));
         }
     }
@@ -137,24 +152,19 @@ impl CircularGauge {
         let tick_count = 8;
         let angle_range = PI * 1.5;
         let start_angle = -PI * 0.75;
-        
+
         for i in 0..=tick_count {
             let angle = start_angle + (i as f32 / tick_count as f32) * angle_range;
-            let inner_pos = center + Vec2::new(angle.cos() * (radius - 10.0), angle.sin() * (radius - 10.0));
+            let inner_pos =
+                center + Vec2::new(angle.cos() * (radius - 10.0), angle.sin() * (radius - 10.0));
             let outer_pos = center + Vec2::new(angle.cos() * radius, angle.sin() * radius);
-            
-            painter.line_segment(
-                [inner_pos, outer_pos],
-                Stroke::new(1.0, Color32::GRAY)
-            );
+
+            painter.line_segment([inner_pos, outer_pos], Stroke::new(1.0, Color32::GRAY));
         }
     }
 
     fn draw_needle(&self, painter: &egui::Painter, center: Pos2, radius: f32, angle: f32) {
         let needle_end = center + Vec2::new(angle.cos() * radius, angle.sin() * radius);
-        painter.line_segment(
-            [center, needle_end],
-            Stroke::new(3.0, Color32::WHITE)
-        );
+        painter.line_segment([center, needle_end], Stroke::new(3.0, Color32::WHITE));
     }
 }

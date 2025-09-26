@@ -17,7 +17,7 @@ pub struct DynoData {
     pub test_date: String,
     pub test_time: String,
     pub motorcycle: String,
-    pub power_curve: Vec<(f32, f32)>, // (RPM, HP)
+    pub power_curve: Vec<(f32, f32)>,  // (RPM, HP)
     pub torque_curve: Vec<(f32, f32)>, // (RPM, Torque)
     pub oil_pressure_temp: f32,
     last_update: Instant,
@@ -57,7 +57,7 @@ impl DynoData {
             self.speed_kmh = 95.2 + time_factor * 2.0;
             self.horsepower = 125.7 + time_factor * 3.0;
             self.torque = 98.3 + time_factor * 2.0;
-            
+
             self.last_update = now;
         }
     }
