@@ -18,7 +18,7 @@ fn main() -> Result<(), eframe::Error> {
     };
 
     eframe::run_native(
-        "MotoDyno v1.0.0",
+        "SRP Dyno Test v1.0.0",
         options,
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
