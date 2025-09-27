@@ -1,4 +1,5 @@
 use std::time::{Duration, Instant};
+use crate::dyno::serial_comm::ArduinoData;
 
 #[derive(Debug, Clone)]
 pub struct DynoData {
@@ -60,6 +61,40 @@ impl DynoData {
 
             self.last_update = now;
         }
+    }
+
+    pub fn update_from_arduino(&mut self, arduino_data: &ArduinoData) {
+        self.rpm = arduino_data.rpm;
+        self.speed_kmh = arduino_data.speed;
+        self.horsepower = arduino_data.horsepower;
+        self.torque = arduino_data.torque;
+        self.air_fuel_ratio = arduino_data.afr;
+        self.coolant_temp = arduino_data.oil_temp; // Using oil temp as coolant temp
+        self.oil_pressure_temp = arduino_data.oil_temp;
+
+        // Update peak values if current values are higher
+        if self.horsepower > self.peak_hp {
+            self.peak_hp = self.horsepower;
+        }
+        if self.torque > self.peak_torque {
+            self.peak_torque = self.torque;
+        }
+
+        // Update power and torque curves with new data points
+        if self.rpm > 0.0 {
+            self.power_curve.push((self.rpm, self.horsepower));
+            self.torque_curve.push((self.rpm, self.torque));
+
+            // Keep only last 100 points to prevent excessive memory usage
+            if self.power_curve.len() > 100 {
+                self.power_curve.remove(0);
+            }
+            if self.torque_curve.len() > 100 {
+                self.torque_curve.remove(0);
+            }
+        }
+
+        self.last_update = Instant::now();
     }
 
     fn generate_power_curve() -> Vec<(f32, f32)> {
