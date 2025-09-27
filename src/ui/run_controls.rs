@@ -81,6 +81,7 @@ impl RunControls {
                                 if let Some(ref mut conn) = self.serial_connection {
                                     conn.start_simulation();
                                     self.simulation_mode = true;
+                                    data.start_simulation();
                                 }
                             }
                         }
@@ -90,6 +91,7 @@ impl RunControls {
                                     if self.simulation_mode {
                                         conn.stop_simulation();
                                         self.simulation_mode = false;
+                                        data.stop_simulation();
                                     } else {
                                         conn.disconnect();
                                     }
@@ -136,7 +138,7 @@ impl RunControls {
                     )
                     .clicked()
                 {
-                    self.toggle_test();
+                    self.toggle_test(data);
                 }
 
                 ui.add_space(10.0);
@@ -154,7 +156,7 @@ impl RunControls {
                     )
                     .clicked()
                 {
-                    self.emergency_stop();
+                    self.emergency_stop(data);
                 }
 
                 ui.add_space(10.0);
@@ -168,9 +170,7 @@ impl RunControls {
                     )
                     .clicked()
                 {
-                    self.reset();
-                    // Reset data as well
-                    *data = DynoData::new();
+                    self.reset(data);
                 }
 
                 ui.add_space(20.0);
@@ -184,6 +184,8 @@ impl RunControls {
                     ui.label(RichText::new("(SIM)").size(12.0).color(Color32::from_rgb(0, 255, 255)));
                 }
             });
+
+            ui.add_space(10.0);
         });
 
         // Update data from serial connection
@@ -203,15 +205,19 @@ impl RunControls {
         self.emergency_stop
     }
 
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, data: &mut DynoData) {
         self.is_running = false;
         self.emergency_stop = false;
+        data.reset_data();
     }
 
-    fn toggle_test(&mut self) {
+    fn toggle_test(&mut self, data: &mut DynoData) {
         self.is_running = !self.is_running;
         if !self.is_running {
             self.emergency_stop = false;
+            data.stop_test();
+        } else {
+            data.start_test();
         }
 
         // Send commands to Arduino if connected
@@ -223,9 +229,10 @@ impl RunControls {
         }
     }
 
-    fn emergency_stop(&mut self) {
+    fn emergency_stop(&mut self, data: &mut DynoData) {
         self.emergency_stop = true;
         self.is_running = false;
+        data.stop_test();
 
         // Send emergency stop command to Arduino if connected
         if let Some(ref mut connection) = self.serial_connection {

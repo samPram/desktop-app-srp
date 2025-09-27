@@ -36,11 +36,23 @@ impl PowerTorqueChart {
         // Modern background with gradient effect
         self.draw_background(&painter, chart_rect);
 
+        // Determine RPM range for X-axis
+        let mut max_rpm = 12000.0; // Default 12000 RPM
+        let mut min_rpm = 1000.0;  // Default 1000 RPM
+        if !power_curve.is_empty() || !torque_curve.is_empty() {
+            let all_rpms: Vec<f32> = power_curve.iter().chain(torque_curve.iter())
+                .map(|(rpm, _)| *rpm).collect();
+            if !all_rpms.is_empty() {
+                min_rpm = all_rpms.iter().fold(f32::INFINITY, |a, &b| a.min(b)).max(500.0f32);
+                max_rpm = all_rpms.iter().fold(0.0f32, |a, &b| a.max(b)).max(12000.0f32);
+            }
+        }
+
         // Grid with better styling
         self.draw_grid(&painter, plot_rect);
 
         // Enhanced axes
-        self.draw_axes(&painter, plot_rect, chart_rect);
+        self.draw_axes(&painter, plot_rect, chart_rect, min_rpm, max_rpm);
 
         // HP curve (red) - referenced to left Y-axis
         if !power_curve.is_empty() {
@@ -51,8 +63,8 @@ impl PowerTorqueChart {
                 Color32::from_rgb(255, 80, 80),  // Bright red
                 0.0,
                 200.0, // 0-200 HP range
-                0.0,
-                15000.0, // 0-15k RPM range
+                min_rpm,
+                max_rpm, // RPM range
             );
 
             // Add glow effect for HP curve
@@ -63,8 +75,8 @@ impl PowerTorqueChart {
                 Color32::from_rgba_premultiplied(255, 80, 80, 60),
                 0.0,
                 200.0,
-                0.0,
-                15000.0,
+                min_rpm,
+                max_rpm,
             );
         }
 
@@ -77,8 +89,8 @@ impl PowerTorqueChart {
                 Color32::from_rgb(80, 150, 255), // Bright blue
                 0.0,
                 150.0, // 0-150 Nm range
-                0.0,
-                15000.0, // 0-15k RPM range
+                min_rpm,
+                max_rpm, // RPM range
             );
 
             // Add glow effect for Torque curve
@@ -89,8 +101,8 @@ impl PowerTorqueChart {
                 Color32::from_rgba_premultiplied(80, 150, 255, 60),
                 0.0,
                 150.0,
-                0.0,
-                15000.0,
+                min_rpm,
+                max_rpm,
             );
         }
 
@@ -166,7 +178,7 @@ impl PowerTorqueChart {
         }
     }
 
-    fn draw_axes(&self, painter: &egui::Painter, plot_rect: Rect, chart_rect: Rect) {
+    fn draw_axes(&self, painter: &egui::Painter, plot_rect: Rect, chart_rect: Rect, min_rpm: f32, max_rpm: f32) {
         let axis_color = Color32::from_rgb(180, 185, 195);
         let axis_stroke = Stroke::new(2.0, axis_color);
         let label_color = Color32::from_rgb(200, 205, 215);
@@ -192,11 +204,11 @@ impl PowerTorqueChart {
         // X-axis labels (RPM) - bottom
         for i in 0..=6 {
             let x = plot_rect.min.x + (i as f32 / 6.0) * plot_rect.width();
-            let rpm = i * 2500; // 0 to 15000 RPM
+            let rpm = min_rpm + (i as f32 / 6.0) * (max_rpm - min_rpm); // min_rpm to max_rpm
             painter.text(
                 Pos2::new(x, plot_rect.max.y + 20.0),
                 egui::Align2::CENTER_TOP,
-                &format!("{}", rpm),
+                &format!("{:.0}", rpm),
                 egui::FontId::proportional(11.0),
                 label_color,
             );

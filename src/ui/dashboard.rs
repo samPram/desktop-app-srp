@@ -118,12 +118,12 @@ impl Dashboard {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_space(20.0);
 
-                            // Torque widget
+                            // Torque widget - current value
                             ui.vertical(|ui| {
                                 self.torque_hp_widget(
                                     ui,
                                     "Torque",
-                                    &format!("{:.1}", data.peak_torque),
+                                    &format!("{:.1}", data.torque),
                                     "Nm",
                                     Color32::from_rgb(50, 100, 180),
                                 );
@@ -131,12 +131,12 @@ impl Dashboard {
 
                             ui.add_space(20.0);
 
-                            // HP widget
+                            // HP widget - current value
                             ui.vertical(|ui| {
                                 self.torque_hp_widget(
                                     ui,
                                     "Power",
-                                    &format!("{:.1}", data.peak_hp),
+                                    &format!("{:.1}", data.horsepower),
                                     "HP",
                                     Color32::from_rgb(180, 50, 50),
                                 );
