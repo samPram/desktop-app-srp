@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2, Rounding};
 
 pub struct PowerTorqueChart {
     width: f32,
@@ -8,148 +8,251 @@ pub struct PowerTorqueChart {
 impl PowerTorqueChart {
     pub fn new() -> Self {
         Self {
-            width: 400.0,
-            height: 250.0,
+            width: 600.0,
+            height: 350.0,
         }
     }
 
     pub fn show(
         &mut self,
         ui: &mut egui::Ui,
-        power_curve: &[(f32, f32)],
-        torque_curve: &[(f32, f32)],
+        power_curve: &[(f32, f32)], // (RPM, HP)
+        torque_curve: &[(f32, f32)], // (RPM, Nm)
     ) {
         let (response, painter) =
             ui.allocate_painter(Vec2::new(self.width, self.height), egui::Sense::hover());
 
         let chart_rect = response.rect;
-        let margin = 40.0;
-        let plot_rect = Rect::from_min_size(
-            chart_rect.min + Vec2::splat(margin),
-            chart_rect.size() - Vec2::splat(margin * 2.0),
+        let margin_left = 60.0;  // More space for HP labels
+        let margin_right = 60.0; // Space for Torque labels
+        let margin_top = 40.0;
+        let margin_bottom = 60.0; // Space for RPM labels
+
+        let plot_rect = Rect::from_min_max(
+            chart_rect.min + Vec2::new(margin_left, margin_top),
+            chart_rect.max - Vec2::new(margin_right, margin_bottom),
         );
 
-        // Background
-        painter.rect_filled(chart_rect, 5.0, Color32::from_rgb(25, 25, 25));
-        painter.rect_stroke(
-            chart_rect,
-            5.0,
-            Stroke::new(1.0, Color32::from_rgb(60, 60, 60)),
-        );
+        // Modern background with gradient effect
+        self.draw_background(&painter, chart_rect);
 
-        // Grid
+        // Grid with better styling
         self.draw_grid(&painter, plot_rect);
 
-        // Axes
-        self.draw_axes(&painter, plot_rect);
+        // Enhanced axes
+        self.draw_axes(&painter, plot_rect, chart_rect);
 
-        // Power curve (red)
+        // HP curve (red) - referenced to left Y-axis
         if !power_curve.is_empty() {
             self.draw_curve(
                 &painter,
                 plot_rect,
                 power_curve,
-                Color32::from_rgb(220, 60, 60),
+                Color32::from_rgb(255, 80, 80),  // Bright red
                 0.0,
-                140.0,
-                1000.0,
-                12000.0,
+                200.0, // 0-200 HP range
+                0.0,
+                15000.0, // 0-15k RPM range
+            );
+
+            // Add glow effect for HP curve
+            self.draw_curve_glow(
+                &painter,
+                plot_rect,
+                power_curve,
+                Color32::from_rgba_premultiplied(255, 80, 80, 60),
+                0.0,
+                200.0,
+                0.0,
+                15000.0,
             );
         }
 
-        // Torque curve (blue)
+        // Torque curve (blue) - referenced to right Y-axis
         if !torque_curve.is_empty() {
             self.draw_curve(
                 &painter,
                 plot_rect,
                 torque_curve,
-                Color32::from_rgb(60, 120, 220),
+                Color32::from_rgb(80, 150, 255), // Bright blue
                 0.0,
-                100.0,
-                1000.0,
-                12000.0,
+                150.0, // 0-150 Nm range
+                0.0,
+                15000.0, // 0-15k RPM range
+            );
+
+            // Add glow effect for Torque curve
+            self.draw_curve_glow(
+                &painter,
+                plot_rect,
+                torque_curve,
+                Color32::from_rgba_premultiplied(80, 150, 255, 60),
+                0.0,
+                150.0,
+                0.0,
+                15000.0,
             );
         }
 
-        // Legend
+        // Enhanced legend
         self.draw_legend(&painter, chart_rect);
 
-        // Title
+        // Chart title
         painter.text(
-            chart_rect.center_top() + Vec2::new(0.0, 10.0),
+            chart_rect.center_top() + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_TOP,
-            "Horsepower vs Torque",
-            egui::FontId::proportional(14.0),
+            "Horsepower & Torque vs RPM",
+            egui::FontId::proportional(16.0),
             Color32::WHITE,
         );
     }
 
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
-        let grid_color = Color32::from_rgb(40, 40, 40);
-        let grid_stroke = Stroke::new(0.5, grid_color);
+    fn draw_background(&self, painter: &egui::Painter, rect: Rect) {
+        // Main background with rounded corners
+        painter.rect_filled(
+            rect,
+            Rounding::same(12.0),
+            Color32::from_rgb(25, 28, 35)
+        );
 
-        // Vertical grid lines (RPM)
+        // Border
+        painter.rect_stroke(
+            rect,
+            Rounding::same(12.0),
+            Stroke::new(1.5, Color32::from_rgb(60, 65, 75)),
+        );
+
+        // Inner area with slight gradient effect
+        let inner_rect = rect.shrink(8.0);
+        painter.rect_filled(
+            inner_rect,
+            Rounding::same(8.0),
+            Color32::from_rgb(20, 23, 30)
+        );
+    }
+
+    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
+        let major_grid_color = Color32::from_rgb(45, 50, 60);
+        let minor_grid_color = Color32::from_rgb(35, 40, 50);
+
+        // Major vertical grid lines (every 2500 RPM)
         for i in 0..=6 {
             let x = rect.min.x + (i as f32 / 6.0) * rect.width();
+            let stroke = if i % 2 == 0 {
+                Stroke::new(1.0, major_grid_color)
+            } else {
+                Stroke::new(0.5, minor_grid_color)
+            };
+
             painter.line_segment(
                 [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-                grid_stroke,
+                stroke,
             );
         }
 
-        // Horizontal grid lines
-        for i in 0..=5 {
-            let y = rect.min.y + (i as f32 / 5.0) * rect.height();
+        // Major horizontal grid lines
+        for i in 0..=8 {
+            let y = rect.min.y + (i as f32 / 8.0) * rect.height();
+            let stroke = if i % 2 == 0 {
+                Stroke::new(1.0, major_grid_color)
+            } else {
+                Stroke::new(0.5, minor_grid_color)
+            };
+
             painter.line_segment(
                 [Pos2::new(rect.min.x, y), Pos2::new(rect.max.x, y)],
-                grid_stroke,
+                stroke,
             );
         }
     }
 
-    fn draw_axes(&self, painter: &egui::Painter, rect: Rect) {
-        let axis_color = Color32::LIGHT_GRAY;
-        let axis_stroke = Stroke::new(1.0, axis_color);
+    fn draw_axes(&self, painter: &egui::Painter, plot_rect: Rect, chart_rect: Rect) {
+        let axis_color = Color32::from_rgb(180, 185, 195);
+        let axis_stroke = Stroke::new(2.0, axis_color);
+        let label_color = Color32::from_rgb(200, 205, 215);
 
-        // X-axis
-        painter.line_segment([rect.left_bottom(), rect.right_bottom()], axis_stroke);
+        // X-axis (bottom)
+        painter.line_segment(
+            [plot_rect.left_bottom(), plot_rect.right_bottom()],
+            axis_stroke
+        );
 
-        // Y-axis
-        painter.line_segment([rect.left_bottom(), rect.left_top()], axis_stroke);
+        // Left Y-axis (HP)
+        painter.line_segment(
+            [plot_rect.left_bottom(), plot_rect.left_top()],
+            Stroke::new(2.0, Color32::from_rgb(255, 80, 80))
+        );
 
-        // X-axis labels (RPM)
+        // Right Y-axis (Torque)
+        painter.line_segment(
+            [plot_rect.right_bottom(), plot_rect.right_top()],
+            Stroke::new(2.0, Color32::from_rgb(80, 150, 255))
+        );
+
+        // X-axis labels (RPM) - bottom
         for i in 0..=6 {
-            let x = rect.min.x + (i as f32 / 6.0) * rect.width();
-            let rpm = 1000 + (i * 1833); // 1000 to 12000 RPM
+            let x = plot_rect.min.x + (i as f32 / 6.0) * plot_rect.width();
+            let rpm = i * 2500; // 0 to 15000 RPM
             painter.text(
-                Pos2::new(x, rect.max.y + 15.0),
+                Pos2::new(x, plot_rect.max.y + 20.0),
                 egui::Align2::CENTER_TOP,
                 &format!("{}", rpm),
-                egui::FontId::proportional(10.0),
-                Color32::GRAY,
+                egui::FontId::proportional(11.0),
+                label_color,
             );
         }
 
-        // Y-axis labels
-        for i in 0..=5 {
-            let y = rect.max.y - (i as f32 / 5.0) * rect.height();
-            let value = i * 30; // 0 to 150
+        // Left Y-axis labels (HP)
+        for i in 0..=8 {
+            let y = plot_rect.max.y - (i as f32 / 8.0) * plot_rect.height();
+            let hp = (i * 25) as i32; // 0 to 200 HP
             painter.text(
-                Pos2::new(rect.min.x - 25.0, y),
+                Pos2::new(plot_rect.min.x - 15.0, y),
                 egui::Align2::RIGHT_CENTER,
-                &format!("{}", value),
-                egui::FontId::proportional(10.0),
-                Color32::GRAY,
+                &format!("{}", hp),
+                egui::FontId::proportional(11.0),
+                Color32::from_rgb(255, 120, 120),
+            );
+        }
+
+        // Right Y-axis labels (Torque)
+        for i in 0..=6 {
+            let y = plot_rect.max.y - (i as f32 / 6.0) * plot_rect.height();
+            let torque = (i * 25) as i32; // 0 to 150 Nm
+            painter.text(
+                Pos2::new(plot_rect.max.x + 15.0, y),
+                egui::Align2::LEFT_CENTER,
+                &format!("{}", torque),
+                egui::FontId::proportional(11.0),
+                Color32::from_rgb(120, 180, 255),
             );
         }
 
         // Axis titles
         painter.text(
-            Pos2::new(rect.center().x, rect.max.y + 35.0),
-            egui::Align2::CENTER_TOP,
+            Pos2::new(plot_rect.center().x, chart_rect.max.y - 15.0),
+            egui::Align2::CENTER_CENTER,
             "RPM",
-            egui::FontId::proportional(12.0),
+            egui::FontId::proportional(14.0),
             Color32::WHITE,
+        );
+
+        // Rotate and position HP label (left side)
+        painter.text(
+            Pos2::new(15.0, plot_rect.center().y),
+            egui::Align2::CENTER_CENTER,
+            "HP",
+            egui::FontId::proportional(14.0),
+            Color32::from_rgb(255, 120, 120),
+        );
+
+        // Torque label (right side)
+        painter.text(
+            Pos2::new(chart_rect.max.x - 15.0, plot_rect.center().y),
+            egui::Align2::CENTER_CENTER,
+            "Nm",
+            egui::FontId::proportional(14.0),
+            Color32::from_rgb(120, 180, 255),
         );
     }
 
@@ -179,39 +282,94 @@ impl PowerTorqueChart {
             points.push(Pos2::new(screen_x, screen_y));
         }
 
-        // Draw the curve
+        // Draw the curve with enhanced thickness
         for i in 0..points.len() - 1 {
-            painter.line_segment([points[i], points[i + 1]], Stroke::new(2.5, color));
+            painter.line_segment([points[i], points[i + 1]], Stroke::new(3.0, color));
+        }
+
+        // Add data points
+        for point in &points {
+            painter.circle_filled(*point, 3.0, color);
+            painter.circle_stroke(*point, 3.0, Stroke::new(1.0, Color32::WHITE));
+        }
+    }
+
+    fn draw_curve_glow(
+        &self,
+        painter: &egui::Painter,
+        rect: Rect,
+        curve: &[(f32, f32)],
+        glow_color: Color32,
+        min_y: f32,
+        max_y: f32,
+        min_x: f32,
+        max_x: f32,
+    ) {
+        if curve.len() < 2 {
+            return;
+        }
+
+        let mut points = Vec::new();
+        for &(x, y) in curve {
+            let normalized_x = (x - min_x) / (max_x - min_x);
+            let normalized_y = (y - min_y) / (max_y - min_y);
+
+            let screen_x = rect.min.x + normalized_x * rect.width();
+            let screen_y = rect.max.y - normalized_y * rect.height();
+
+            points.push(Pos2::new(screen_x, screen_y));
+        }
+
+        // Draw glow effect (thicker, transparent line)
+        for i in 0..points.len() - 1 {
+            painter.line_segment([points[i], points[i + 1]], Stroke::new(6.0, glow_color));
         }
     }
 
     fn draw_legend(&self, painter: &egui::Painter, chart_rect: Rect) {
-        let legend_pos = chart_rect.right_top() + Vec2::new(-120.0, 30.0);
+        let legend_rect = Rect::from_min_size(
+            chart_rect.right_top() + Vec2::new(-180.0, 50.0),
+            Vec2::new(160.0, 60.0),
+        );
 
-        // Power line
+        // Legend background
+        painter.rect_filled(
+            legend_rect,
+            Rounding::same(6.0),
+            Color32::from_rgba_premultiplied(30, 35, 45, 200),
+        );
+        painter.rect_stroke(
+            legend_rect,
+            Rounding::same(6.0),
+            Stroke::new(1.0, Color32::from_rgb(60, 65, 75)),
+        );
+
+        let legend_pos = legend_rect.min + Vec2::new(15.0, 20.0);
+
+        // HP line
         painter.line_segment(
-            [legend_pos, legend_pos + Vec2::new(20.0, 0.0)],
-            Stroke::new(2.5, Color32::from_rgb(220, 60, 60)),
+            [legend_pos, legend_pos + Vec2::new(25.0, 0.0)],
+            Stroke::new(3.0, Color32::from_rgb(255, 80, 80)),
         );
         painter.text(
-            legend_pos + Vec2::new(25.0, 0.0),
+            legend_pos + Vec2::new(35.0, 0.0),
             egui::Align2::LEFT_CENTER,
             "Horsepower",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(12.0),
             Color32::WHITE,
         );
 
         // Torque line
-        let torque_pos = legend_pos + Vec2::new(0.0, 15.0);
+        let torque_pos = legend_pos + Vec2::new(0.0, 20.0);
         painter.line_segment(
-            [torque_pos, torque_pos + Vec2::new(20.0, 0.0)],
-            Stroke::new(2.5, Color32::from_rgb(60, 120, 220)),
+            [torque_pos, torque_pos + Vec2::new(25.0, 0.0)],
+            Stroke::new(3.0, Color32::from_rgb(80, 150, 255)),
         );
         painter.text(
-            torque_pos + Vec2::new(25.0, 0.0),
+            torque_pos + Vec2::new(35.0, 0.0),
             egui::Align2::LEFT_CENTER,
             "Torque",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(12.0),
             Color32::WHITE,
         );
     }

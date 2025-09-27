@@ -1,6 +1,5 @@
 use crate::data::models::DynoData;
 use crate::ui::charts::PowerTorqueChart;
-use crate::ui::gauges::CircularGauge;
 use crate::ui::rpm_gauge::RpmGauge;
 use crate::ui::run_controls::RunControls;
 use crate::ui::sidebar::{Sidebar, SidebarItem};
@@ -15,6 +14,7 @@ pub struct PanelLayout {
     speed_gauge: SpeedGauge,
     run_controls: RunControls,
     sidebar: Sidebar,
+    current_page: SidebarItem, // Add current page state
     show_top_panel: bool,
     show_left_panel: bool,
     show_right_panel: bool,
@@ -29,6 +29,7 @@ impl PanelLayout {
             chart: PowerTorqueChart::new(),
             run_controls: RunControls::new(),
             sidebar: Sidebar::new(),
+            current_page: SidebarItem::Dashboard, // Initialize with Dashboard
             show_top_panel: true,
             show_left_panel: true,
             show_right_panel: true,
@@ -127,14 +128,8 @@ impl PanelLayout {
                 )
                 .show_inside(ui, |ui| {
                     if let Some(selected) = self.sidebar.show(ui) {
-                        // Handle navigation changes
-                        match selected {
-                            SidebarItem::Dashboard => { /* switch to dashboard */ }
-                            SidebarItem::DynData => { /* switch to dyn data */ }
-                            SidebarItem::RunHistory => { /* switch to run history */ }
-                            SidebarItem::Reports => { /* switch to reports */ }
-                            SidebarItem::Configuration => { /* switch to configuration */ }
-                        }
+                        // Handle navigation changes - update current page
+                        self.current_page = selected;
                     }
                 });
         }
@@ -182,7 +177,18 @@ impl PanelLayout {
         }
 
         // Central panel - Main content area based on sidebar selection
-        self.show_dashboard_content(ui, data);
+        self.show_content_based_on_selection(ui, data);
+    }
+
+    // Content switching based on sidebar selection
+    fn show_content_based_on_selection(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+        match self.current_page {
+            SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+            SidebarItem::DynData => self.show_dyn_data_content(ui, data),
+            SidebarItem::RunHistory => self.show_run_history_content(ui, data),
+            SidebarItem::Reports => self.show_reports_content(ui, data),
+            SidebarItem::Configuration => self.show_configuration_content(ui, data),
+        }
     }
 
     // Main dashboard container following egui example pattern
@@ -224,12 +230,12 @@ impl PanelLayout {
                                 });
                         });
 
-                        ui.add_space(40.0);
+                        ui.add_space(20.0);
 
                         // Chart section
                         self.show_chart_card(ui, data);
 
-                        ui.add_space(40.0);
+                        ui.add_space(20.0);
 
                         // Performance cards section
                         self.show_performance_cards(ui, data);
@@ -313,7 +319,7 @@ impl PanelLayout {
         });
     }
 
-    fn show_chart_card(&mut self, ui: &mut egui::Ui, _data: &DynoData) {
+    fn show_chart_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
         // Chart container following egui example pattern
         let card_frame = Frame::none()
             .fill(Color32::from_rgb(40, 40, 45))
@@ -326,50 +332,12 @@ impl PanelLayout {
             ui.with_layout(
                 egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
                 |ui| {
-                    // Chart header - let it flow naturally
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(RichText::new("Power & Torque Curves").size(18.0).strong().color(Color32::WHITE));
-                        
-                        // Legend on the same line, wraps if needed
-                        ui.add_space(20.0);
-                        ui.label(RichText::new("●").size(14.0).color(Color32::from_rgb(255, 70, 70)));
-                        ui.label(RichText::new("Horsepower").size(12.0).color(Color32::LIGHT_GRAY));
-                        ui.add_space(15.0);
-                        ui.label(RichText::new("●").size(14.0).color(Color32::from_rgb(70, 130, 255)));
-                        ui.label(RichText::new("Torque").size(12.0).color(Color32::LIGHT_GRAY));
-                    });
+                    ui.add_space(10.0);
 
-                    ui.add_space(20.0);
-                    ui.separator();
-                    ui.add_space(25.0);
-
-                    // Chart area - use safe sizing
-                    let available_rect = ui.available_rect_before_wrap();
-                    let chart_width = available_rect.width().max(200.0);
-                    let chart_height = 300.0f32.max(100.0); // Ensure minimum size
+                    // Use the actual PowerTorqueChart from charts.rs
+                    self.chart.show(ui, &data.power_curve, &data.torque_curve);
                     
-                    // Safe allocation with validated size
-                    let (rect, _response) = ui.allocate_exact_size(
-                        Vec2::new(chart_width, chart_height),
-                        egui::Sense::hover()
-                    );
-
-                    // Chart background
-                    ui.painter().rect_filled(
-                        rect,
-                        Rounding::same(8.0),
-                        Color32::from_rgb(25, 25, 30)
-                    );
-
-                    ui.painter().text(
-                        rect.center(),
-                        egui::Align2::CENTER_CENTER,
-                        "Chart Placeholder\n(Power & Torque vs RPM)",
-                        egui::FontId::proportional(16.0),
-                        Color32::GRAY
-                    );
-
-                    // Replace with: self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                    ui.add_space(10.0);
                 },
             );
         });
@@ -453,6 +421,55 @@ impl PanelLayout {
                     });
                 },
             );
+        });
+    }
+
+    // Other page content methods
+    fn show_dyn_data_content(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.heading("Dyn Data");
+                ui.add_space(20.0);
+                ui.label("Real-time dyno data visualization and analysis");
+                ui.add_space(10.0);
+                ui.label("🚧 Coming Soon...");
+            });
+        });
+    }
+
+    fn show_run_history_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData) {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.heading("Run History");
+                ui.add_space(20.0);
+                ui.label("View and manage previous dyno test runs");
+                ui.add_space(10.0);
+                ui.label("🚧 Coming Soon...");
+            });
+        });
+    }
+
+    fn show_reports_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData) {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.heading("Reports");
+                ui.add_space(20.0);
+                ui.label("Generate and export dyno test reports");
+                ui.add_space(10.0);
+                ui.label("🚧 Coming Soon...");
+            });
+        });
+    }
+
+    fn show_configuration_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData) {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.heading("Configuration");
+                ui.add_space(20.0);
+                ui.label("Dyno settings and system configuration");
+                ui.add_space(10.0);
+                ui.label("🚧 Coming Soon...");
+            });
         });
     }
 
@@ -585,7 +602,7 @@ impl PanelLayout {
                 // Peak Horsepower card
                 self.large_metric_card(
                     ui,
-                    "Peak Horsepower",
+                    "Max Horsepower",
                     &format!("{:.1}", data.peak_hp),
                     "HP",
                     Color32::from_rgb(180, 50, 50),
@@ -596,7 +613,7 @@ impl PanelLayout {
                 // Peak Torque card
                 self.large_metric_card(
                     ui,
-                    "Peak Torque",
+                    "max Torque",
                     &format!("{:.1}", data.peak_torque),
                     "Nm",
                     Color32::from_rgb(50, 100, 180),
