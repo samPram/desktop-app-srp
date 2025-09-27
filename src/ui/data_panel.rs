@@ -98,7 +98,7 @@ impl DataPanel {
                     // Peak Horsepower card
                     self.large_metric_card(
                         ui,
-                        "Peak Horsepower",
+                        "Max Horsepower",
                         &format!("{:.1}", data.peak_hp),
                         "HP",
                         Color32::from_rgb(180, 50, 50),
@@ -109,7 +109,7 @@ impl DataPanel {
                     // Peak Torque card
                     self.large_metric_card(
                         ui,
-                        "Peak Torque",
+                        "Max Torque",
                         &format!("{:.1}", data.peak_torque),
                         "Nm",
                         Color32::from_rgb(50, 100, 180),

@@ -377,12 +377,19 @@ impl PanelLayout {
 
     fn show_performance_cards(&self, ui: &mut egui::Ui, _data: &DynoData) {
         // Use natural wrapping layout like the egui example
-        ui.with_layout(
-            egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
-            |ui| {
-                // Let cards wrap naturally using horizontal_wrapped
-                ui.horizontal_wrapped(|ui| {
-                    // Peak Horsepower card
+        ui.vertical_centered(|ui| {
+            let available_width = ui.available_width();
+            let grid_spacing = 20.0;
+            let column_width = (available_width - grid_spacing) / 2.0;
+
+            egui::Grid::new("performance_card_grid")
+                .num_columns(2)
+                .spacing([grid_spacing, 10.0]) // horizontal, vertical spacing
+                .min_col_width(column_width) // Equal column widths
+                .max_col_width(column_width) // Force exact equal widths
+                .striped(false)
+                .show(ui, |ui| {
+                    // Column 1: Peak Horsepower card
                     self.show_performance_value_card(
                         ui,
                         "Peak Horsepower",
@@ -392,9 +399,7 @@ impl PanelLayout {
                         Color32::from_rgb(255, 100, 100)
                     );
 
-                    ui.add_space(20.0);
-
-                    // Peak Torque card
+                    // Column 2: Peak Torque card
                     self.show_performance_value_card(
                         ui,
                         "Peak Torque",
@@ -403,9 +408,10 @@ impl PanelLayout {
                         Color32::from_rgb(70, 130, 220),
                         Color32::from_rgb(90, 150, 255)
                     );
+
+                    ui.end_row(); // End the grid row
                 });
-            },
-        );
+        });
     }
 
     fn show_performance_value_card(&self, ui: &mut egui::Ui, title: &str, value: &str, unit: &str, bg_color: Color32, accent_color: Color32) {
