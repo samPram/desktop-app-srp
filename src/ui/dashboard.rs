@@ -171,10 +171,21 @@ impl Dashboard {
             ui.separator();
             ui.horizontal(|ui| {
                 ui.add_space(10.0);
+                let status_color = if data.is_hardware_connected {
+                    Color32::from_rgb(60, 180, 60)
+                } else if data.connection_status.contains("Error") {
+                    Color32::from_rgb(220, 60, 60)
+                } else if data.connection_status.contains("Connecting") {
+                    Color32::from_rgb(220, 180, 60)
+                } else if data.connection_status.contains("Simulation") {
+                    Color32::from_rgb(0, 255, 255)
+                } else {
+                    Color32::LIGHT_GRAY
+                };
                 ui.label(
-                    RichText::new("Status: Connected to Dyno Hardware. Ready for test.")
+                    RichText::new(&format!("Status: {}", data.connection_status))
                         .size(11.0)
-                        .color(Color32::LIGHT_GRAY),
+                        .color(status_color),
                 );
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

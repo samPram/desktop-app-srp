@@ -1,6 +1,7 @@
 use crate::data::models::DynoData;
 use crate::dyno::serial_comm::{SerialConnection, ConnectionStatus};
 use eframe::egui::{self, Button, Color32, RichText, ComboBox};
+use log::{info, warn, error, debug};
 
 pub struct RunControls {
     is_running: bool,
@@ -57,9 +58,13 @@ impl RunControls {
 
                 // Refresh ports button
                 if ui.add(Button::new("🔄").min_size([25.0, 25.0].into())).clicked() {
+                    info!("User clicked refresh ports button");
                     self.available_ports = SerialConnection::list_ports();
+                    info!("Refreshed ports list: {:?}", self.available_ports);
                     if !self.available_ports.contains(&self.selected_port) {
+                        let old_port = self.selected_port.clone();
                         self.selected_port = self.available_ports.first().cloned().unwrap_or_default();
+                        info!("Selected port changed from '{}' to '{}'", old_port, self.selected_port);
                     }
                 }
 
@@ -70,8 +75,16 @@ impl RunControls {
                     match connection.get_status() {
                         ConnectionStatus::Disconnected => {
                             if ui.add(Button::new("Connect").fill(Color32::from_rgb(60, 140, 60))).clicked() {
+                                info!("User clicked Connect button for port: {}", self.selected_port);
                                 if let Some(ref mut conn) = self.serial_connection {
-                                    let _ = conn.connect(&self.selected_port);
+                                    match conn.connect(&self.selected_port) {
+                                        Ok(()) => {
+                                            info!("Connection attempt completed successfully");
+                                        }
+                                        Err(e) => {
+                                            error!("Connection attempt failed: {}", e);
+                                        }
+                                    }
                                 }
                             }
                             
@@ -190,7 +203,10 @@ impl RunControls {
 
         // Update data from serial connection
         if let Some(ref connection) = self.serial_connection {
-            if matches!(connection.get_status(), ConnectionStatus::Connected) {
+            let status = connection.get_status();
+            data.update_connection_status(&status, self.simulation_mode);
+            
+            if matches!(status, ConnectionStatus::Connected) {
                 let arduino_data = connection.get_data();
                 data.update_from_arduino(&arduino_data);
             }
@@ -249,6 +265,29 @@ impl RunControls {
             ("Test Running", Color32::from_rgb(60, 180, 60))
         } else {
             ("Ready", Color32::from_rgb(220, 180, 60))
+        }
+    }
+
+    pub fn get_connection_status(&self) -> ConnectionStatus {
+        if let Some(ref connection) = self.serial_connection {
+            connection.get_status()
+        } else {
+            ConnectionStatus::Disconnected
+        }
+    }
+
+    pub fn get_connection_status_text(&self) -> String {
+        match self.get_connection_status() {
+            ConnectionStatus::Disconnected => "Disconnected".to_string(),
+            ConnectionStatus::Connecting => "Connecting...".to_string(),
+            ConnectionStatus::Connected => {
+                if self.simulation_mode {
+                    "Simulation Mode".to_string()
+                } else {
+                    "Connected to Hardware".to_string()
+                }
+            }
+            ConnectionStatus::Error(ref msg) => format!("Error: {}", msg),
         }
     }
 }

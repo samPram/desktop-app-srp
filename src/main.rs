@@ -8,6 +8,9 @@ mod ui;
 mod utils;
 
 fn main() -> Result<(), eframe::Error> {
+    // Suppress XDG Settings Portal timeout warnings by setting environment variable
+    std::env::set_var("ADWAITA_DISABLE_PORTAL", "1");
+    
     env_logger::init();
 
     let options = eframe::NativeOptions {

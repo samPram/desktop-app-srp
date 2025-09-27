@@ -1,0 +1,19 @@
+# Udev rules for Arduino and ESP32 serial devices
+# Copy this file to /etc/udev/rules.d/ and run: sudo udevadm control --reload-rules && sudo udevadm trigger
+
+# CP210x USB-to-Serial Bridge (ESP32, some Arduino clones)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+
+# CH340/CH341 USB-to-Serial (cheap Arduino clones)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+
+# FTDI USB-to-Serial (Arduino Uno, Nano, etc.)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+
+# Arduino Uno R3, Mega 2560 (ATmega16U2)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0010", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+
+# Arduino Leonardo, Micro (ATmega32U4)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8036", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0036", MODE="0666", GROUP="dialout", SYMLINK+="arduino%n"

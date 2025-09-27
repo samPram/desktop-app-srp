@@ -85,10 +85,17 @@ impl PanelLayout {
                 .show_inside(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.add_space(10.0);
+                        let connection_status = self.run_controls.get_connection_status_text();
+                        let status_color = match self.run_controls.get_connection_status() {
+                            crate::dyno::serial_comm::ConnectionStatus::Connected => Color32::from_rgb(60, 180, 60),
+                            crate::dyno::serial_comm::ConnectionStatus::Connecting => Color32::from_rgb(220, 180, 60),
+                            crate::dyno::serial_comm::ConnectionStatus::Error(_) => Color32::from_rgb(220, 60, 60),
+                            crate::dyno::serial_comm::ConnectionStatus::Disconnected => Color32::LIGHT_GRAY,
+                        };
                         ui.label(
-                            RichText::new("Status: Connected to Dyno Hardware. Ready for test.")
+                            RichText::new(&format!("Status: {}", connection_status))
                                 .size(11.0)
-                                .color(Color32::LIGHT_GRAY),
+                                .color(status_color),
                         );
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

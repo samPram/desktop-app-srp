@@ -1,5 +1,5 @@
 use std::time::{Duration, Instant};
-use crate::dyno::serial_comm::ArduinoData;
+use crate::dyno::serial_comm::{ArduinoData, ConnectionStatus};
 
 #[derive(Debug, Clone)]
 pub struct DynoData {
@@ -25,6 +25,8 @@ pub struct DynoData {
     start_time: Instant,
     pub is_simulation_running: bool,
     pub is_test_running: bool,
+    pub connection_status: String,
+    pub is_hardware_connected: bool,
 }
 
 impl DynoData {
@@ -53,6 +55,8 @@ impl DynoData {
             oil_pressure_temp: 65.0,
             is_simulation_running: false,
             is_test_running: false,
+            connection_status: "Disconnected".to_string(),
+            is_hardware_connected: false,
         }
     }
 
@@ -220,6 +224,32 @@ impl DynoData {
         self.horsepower = 10.0;
         self.torque = 25.0;
         self.start_time = Instant::now();
+    }
+
+    pub fn update_connection_status(&mut self, status: &ConnectionStatus, is_simulation: bool) {
+        match status {
+            ConnectionStatus::Disconnected => {
+                self.connection_status = "Disconnected".to_string();
+                self.is_hardware_connected = false;
+            }
+            ConnectionStatus::Connecting => {
+                self.connection_status = "Connecting...".to_string();
+                self.is_hardware_connected = false;
+            }
+            ConnectionStatus::Connected => {
+                if is_simulation {
+                    self.connection_status = "Simulation Mode".to_string();
+                    self.is_hardware_connected = false;
+                } else {
+                    self.connection_status = "Connected to Hardware".to_string();
+                    self.is_hardware_connected = true;
+                }
+            }
+            ConnectionStatus::Error(msg) => {
+                self.connection_status = format!("Error: {}", msg);
+                self.is_hardware_connected = false;
+            }
+        }
     }
 
     fn generate_power_curve() -> Vec<(f32, f32)> {

@@ -53,3 +53,58 @@ This is a Rust-based desktop application for motorcycle dynamometer testing buil
 - Integration tests for complete workflows
 - UI tests planned for future implementation
 - Basic data validation tests included
+
+## Serial Port Setup
+
+### Environment Requirements
+For ESP32/Arduino communication, ensure proper serial port access:
+
+1. **User Permissions**: User must be in `dialout` group
+   ```bash
+   sudo usermod -a -G dialout $USER
+   # Logout and login after adding to group
+   ```
+
+2. **Setup Script**: Run the provided setup script
+   ```bash
+   ./setup_serial.sh
+   ```
+
+3. **Supported Devices**:
+   - ESP32 with CP210x USB bridge (VID: 10c4, PID: ea60)
+   - Arduino Uno/Nano with FTDI or CH340 chips
+   - Any device creating `/dev/ttyUSB*` or `/dev/ttyACM*`
+
+### Troubleshooting Serial Issues
+- **"Device or resource busy"**: Close Arduino IDE or other serial programs
+- **"Permission denied"**: Check user is in dialout group
+- **"Port not found"**: Reconnect USB device, check `lsusb` output
+- **Driver issues**: Load CP210x driver with `sudo modprobe cp210x`
+
+## Arduino Communication Protocol
+
+### Data Format
+The ESP32 sends JSON data every 100ms in this format:
+```json
+{"rpm":3500.1,"speed":75.50,"oilTemp":85.3,"torque":18.45,"horsepower":12.30,"afr":14.70}
+```
+
+### Motor Specifications (110cc-250cc)
+- **RPM Range**: 0-12000 RPM (max 15000 RPM rejected)
+- **Speed Range**: 0-200 km/h
+- **Torque Range**: 0-150 Nm (clamped in Arduino)
+- **Power Range**: 0-200 HP (clamped in Arduino)
+- **Oil Temperature**: -40°C to 200°C (0.0 when sensor disabled)
+- **AFR Range**: 8.0-25.0 (0.0 when sensor disabled)
+
+### Commands
+- **START**: Begin dyno testing
+- **STOP**: Stop dyno testing
+- **Manual control**: Hardware start/stop button on pin 14
+
+### Sensor Configuration
+- **Engine RPM**: Pin 27 (pickup coil/hall sensor)
+- **Roller Speed**: Pin 25 (hall sensor/optocoupler)
+- **Oil Temperature**: Pin 34 (analog, optional)
+- **AFR**: Pin 35 (analog, optional)
+- **Start/Stop**: Pin 14 (digital button)
