@@ -343,7 +343,7 @@ impl PanelLayout {
         });
     }
 
-    fn show_performance_cards(&self, ui: &mut egui::Ui, _data: &DynoData) {
+    fn show_performance_cards(&self, ui: &mut egui::Ui, data: &DynoData) {
         // Use natural wrapping layout like the egui example
         ui.vertical_centered(|ui| {
             let available_width = ui.available_width();
@@ -357,21 +357,21 @@ impl PanelLayout {
                 .max_col_width(column_width) // Force exact equal widths
                 .striped(false)
                 .show(ui, |ui| {
-                    // Column 1: Peak Horsepower card
+                    // Column 1: Current Horsepower card
                     self.show_performance_value_card(
                         ui,
-                        "Peak Horsepower",
-                        "125.7",
+                        "Current Horsepower",
+                        &format!("{:.1}", data.horsepower),
                         "HP",
                         Color32::from_rgb(220, 80, 80),
                         Color32::from_rgb(255, 100, 100)
                     );
 
-                    // Column 2: Peak Torque card
+                    // Column 2: Current Torque card
                     self.show_performance_value_card(
                         ui,
-                        "Peak Torque",
-                        "98.3",
+                        "Current Torque",
+                        &format!("{:.1}", data.torque),
                         "Nm",
                         Color32::from_rgb(70, 130, 220),
                         Color32::from_rgb(90, 150, 255)

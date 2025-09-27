@@ -7,7 +7,7 @@ pub struct SpeedGauge {
 
 impl SpeedGauge {
     pub fn new() -> Self {
-        Self { size: 250.0 }
+        Self { size: 400.0 }
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui, speed_kmh: f32) {

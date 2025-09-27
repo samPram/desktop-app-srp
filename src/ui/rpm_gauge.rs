@@ -7,7 +7,7 @@ pub struct RpmGauge {
 
 impl RpmGauge {
     pub fn new() -> Self {
-        Self { size: 250.0 }
+        Self { size: 400.0 }
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui, rpm: f32) {
