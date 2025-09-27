@@ -108,3 +108,18 @@ The ESP32 sends JSON data every 100ms in this format:
 - **Oil Temperature**: Pin 34 (analog, optional)
 - **AFR**: Pin 35 (analog, optional)
 - **Start/Stop**: Pin 14 (digital button)
+
+### Speed Data Processing
+
+#### Arduino-side Filtering
+- **minSpeedThreshold**: 2.0 km/h (below this → speed = 0)
+- **minValidPulseRoller**: 2 pulses minimum
+- **maxValidPulseRoller**: 50 pulses maximum
+- **Speed smoothing**: 70% previous + 30% new value
+- **Auto-reset**: Speed/torque → 0 if speed < 2 km/h OR RPM < 300
+
+#### Application-side Smoothing
+- **Smart filtering**: Prevents flickering to 0 when speed > 5 km/h
+- **Gradual decay**: 90% previous value if sudden drop to 0
+- **Light smoothing**: 80% previous + 20% new for stable readings
+- **Debug logging**: Shows smoothing actions when speed change > 1 km/h

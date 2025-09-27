@@ -1,5 +1,6 @@
 use std::time::{Duration, Instant};
 use crate::dyno::serial_comm::{ArduinoData, ConnectionStatus};
+use log::debug;
 
 #[derive(Debug, Clone)]
 pub struct DynoData {
@@ -27,6 +28,9 @@ pub struct DynoData {
     pub is_test_running: bool,
     pub connection_status: String,
     pub is_hardware_connected: bool,
+    // Speed smoothing to prevent flickering to 0
+    prev_speed: f32,
+    speed_smooth_factor: f32,
 }
 
 impl DynoData {
@@ -57,6 +61,8 @@ impl DynoData {
             is_test_running: false,
             connection_status: "Disconnected".to_string(),
             is_hardware_connected: false,
+            prev_speed: 0.0,
+            speed_smooth_factor: 0.8, // Higher value = more smoothing
         }
     }
 
@@ -149,7 +155,35 @@ impl DynoData {
 
     pub fn update_from_arduino(&mut self, arduino_data: &ArduinoData) {
         self.rpm = arduino_data.rpm;
-        self.speed_kmh = arduino_data.speed;
+        
+        // Smart speed smoothing to prevent flickering to 0
+        let raw_speed = arduino_data.speed;
+        if raw_speed > 0.0 {
+            // Normal speed update with light smoothing
+            self.speed_kmh = if self.prev_speed > 0.0 {
+                self.prev_speed * self.speed_smooth_factor + raw_speed * (1.0 - self.speed_smooth_factor)
+            } else {
+                raw_speed
+            };
+        } else if self.prev_speed > 5.0 {
+            // If speed suddenly drops to 0 but was previously > 5 km/h, apply gradual decay
+            self.speed_kmh = self.prev_speed * 0.9;
+            if self.speed_kmh < 0.5 {
+                self.speed_kmh = 0.0;
+            }
+        } else {
+            // Speed was already low, accept the 0
+            self.speed_kmh = 0.0;
+        }
+        
+        // Debug logging for speed changes
+        if (self.speed_kmh - raw_speed).abs() > 1.0 {
+            debug!("Speed smoothing: raw={:.1} -> smooth={:.1} (prev={:.1})", 
+                   raw_speed, self.speed_kmh, self.prev_speed);
+        }
+        
+        self.prev_speed = self.speed_kmh;
+        
         self.horsepower = arduino_data.horsepower;
         self.torque = arduino_data.torque;
         self.air_fuel_ratio = arduino_data.afr;
@@ -224,6 +258,8 @@ impl DynoData {
         self.horsepower = 10.0;
         self.torque = 25.0;
         self.start_time = Instant::now();
+        // Reset speed smoothing
+        self.prev_speed = 0.0;
     }
 
     pub fn update_connection_status(&mut self, status: &ConnectionStatus, is_simulation: bool) {
