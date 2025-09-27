@@ -64,7 +64,7 @@ impl SpeedGauge {
         self.draw_digital_display(&painter, center, speed_kmh);
 
         // Bottom label with style
-        self.draw_bottom_label(&painter, center, outer_radius);
+        // self.draw_bottom_label(&painter, center, outer_radius);
 
         // Speed indicators and warnings
         self.draw_speed_indicators(&painter, center, outer_radius, speed_kmh);

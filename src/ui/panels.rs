@@ -190,6 +190,8 @@ impl PanelLayout {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.vertical_centered(|ui| {
                 ui.heading("Dashboard");
+
+                ui.add_space(10.0);
             });
             
             // Use ScrollArea like the egui example - it handles overflow naturally
@@ -198,17 +200,36 @@ impl PanelLayout {
                 ui.with_layout(
                     egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
                     |ui| {
-                        ui.add_space(20.0);
 
-                        // Gauges section
-                        self.show_gauges_card(ui, data);
+                        // Individual Gauge Cards section - using 2 column Grid with equal widths
+                        ui.vertical_centered(|ui| {
+                            let available_width = ui.available_width();
+                            let grid_spacing = 20.0;
+                            let column_width = (available_width - grid_spacing) / 2.0;
+                            
+                            egui::Grid::new("gauge_cards_grid")
+                                .num_columns(2)
+                                .spacing([grid_spacing, 10.0]) // horizontal, vertical spacing
+                                .min_col_width(column_width) // Equal column widths
+                                .max_col_width(column_width) // Force exact equal widths
+                                .striped(false)
+                                .show(ui, |ui| {
+                                    // Column 1: RPM Gauge Card
+                                    self.show_rpm_gauge_card(ui, data);
+                                    
+                                    // Column 2: Speed Gauge Card
+                                    self.show_speed_gauge_card(ui, data);
+                                    
+                                    ui.end_row(); // End the grid row
+                                });
+                        });
 
-                        // ui.add_space(40.0);
+                        ui.add_space(40.0);
 
                         // Chart section
                         self.show_chart_card(ui, data);
 
-                        // ui.add_space(40.0);
+                        ui.add_space(40.0);
 
                         // Performance cards section
                         self.show_performance_cards(ui, data);
@@ -220,64 +241,73 @@ impl PanelLayout {
         });
     }
 
-    fn show_gauges_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
-        // Use Frame like the example but let content flow naturally
+    fn show_rpm_gauge_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+        // RPM Gauge Card with constrained size
         let card_frame = Frame::none()
             .fill(Color32::from_rgb(40, 40, 45))
             .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
             .rounding(Rounding::same(12.0))
-            .inner_margin(Margin::same(25.0));
+            .inner_margin(Margin::same(15.0));
 
         card_frame.show(ui, |ui| {
-            // Use cross-justified layout like the egui example
+            // Use full available width in grid column
+            ui.set_width(ui.available_width());
+            ui.set_min_height(260.0);
+            
             ui.with_layout(
                 egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
                 |ui| {
-                    // Card header
+                    // Card title
                     ui.label(
-                        RichText::new("Engine Monitoring")
-                            .size(18.0)
+                        RichText::new("ENGINE RPM")
+                            .size(16.0)
                             .strong()
                             .color(Color32::WHITE),
                     );
-                    ui.add_space(5.0);
+                    ui.add_space(10.0);
+
+                    // RPM Gauge - centered in grid cell
+                    ui.vertical_centered(|ui| {
+                        self.rpm_gauge.show(ui, data.rpm);
+                    });
                     
-                    // Status indicator - let it wrap naturally
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(
-                            RichText::new("●")
-                                .size(12.0)
-                                .color(Color32::from_rgb(0, 255, 0)),
-                        );
-                        ui.label(
-                            RichText::new("Connected to Dyno Hardware. Ready for test.")
-                                .size(12.0)
-                                .color(Color32::LIGHT_GRAY),
-                        );
+                    ui.add_space(10.0);
+                },
+            );
+        });
+    }
+
+    fn show_speed_gauge_card(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+        // Speed Gauge Card with constrained size
+        let card_frame = Frame::none()
+            .fill(Color32::from_rgb(40, 40, 45))
+            .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
+            .rounding(Rounding::same(12.0))
+            .inner_margin(Margin::same(15.0));
+
+        card_frame.show(ui, |ui| {
+            // Use full available width in grid column
+            ui.set_width(ui.available_width());
+            ui.set_min_height(260.0);
+            
+            ui.with_layout(
+                egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
+                |ui| {
+                    // Card title
+                    ui.label(
+                        RichText::new("SPEED")
+                            .size(16.0)
+                            .strong()
+                            .color(Color32::WHITE),
+                    );
+                    ui.add_space(10.0);
+
+                    // Speed Gauge - centered in grid cell
+                    ui.vertical_centered(|ui| {
+                        self.speed_gauge.show(ui, data.speed_kmh);
                     });
-
-                    // ui.add_space(20.0);
-                    ui.separator();
-                    // ui.add_space(25.0);
-
-                    // Natural responsive layout - let egui handle the sizing
-                    ui.horizontal_wrapped(|ui| {
-                        // RPM Gauge container
-                        ui.vertical(|ui| {
-
-                            ui.add_space(15.0);
-                            self.rpm_gauge.show(ui, data.rpm);
-                        });
-
-                        // ui.add_space(40.0);
-
-                        // Speed Gauge container
-                        ui.vertical(|ui| {
-
-                            ui.add_space(15.0);
-                            self.speed_gauge.show(ui, data.speed_kmh);
-                        });
-                    });
+                    
+                    ui.add_space(10.0);
                 },
             );
         });

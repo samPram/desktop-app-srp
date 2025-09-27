@@ -64,7 +64,7 @@ impl RpmGauge {
         self.draw_digital_display(&painter, center, rpm, rpm_thousands);
 
         // Bottom label with style
-        self.draw_bottom_label(&painter, center, outer_radius);
+        // self.draw_bottom_label(&painter, center, outer_radius);
 
         // Optional: Current gear indicator or status lights
         self.draw_status_indicators(&painter, center, outer_radius, rpm);
