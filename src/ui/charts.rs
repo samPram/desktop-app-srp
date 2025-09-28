@@ -561,7 +561,7 @@ impl PowerTorqueChart {
         painter.text(
             Pos2::new(plot_rect.center().x, chart_rect.max.y - 15.0),
             egui::Align2::CENTER_CENTER,
-            "Time Progression →",
+            "Time Progression",
             egui::FontId::proportional(14.0),
             Color32::WHITE,
         );

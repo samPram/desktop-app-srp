@@ -263,12 +263,12 @@ impl PanelLayout {
             .fill(Color32::from_rgb(40, 40, 45))
             .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
             .rounding(Rounding::same(12.0))
-            .inner_margin(Margin::same(15.0));
+            .inner_margin(Margin::same(8.0));
 
         card_frame.show(ui, |ui| {
             // Use full available width in grid column
             ui.set_width(ui.available_width());
-            ui.set_min_height(260.0);
+            ui.set_min_height(80.0);
             
             ui.with_layout(
                 egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),
@@ -299,12 +299,12 @@ impl PanelLayout {
             .fill(Color32::from_rgb(40, 40, 45))
             .stroke(Stroke::new(1.0, Color32::from_rgb(60, 60, 65)))
             .rounding(Rounding::same(12.0))
-            .inner_margin(Margin::same(15.0));
+            .inner_margin(Margin::same(8.0));
 
         card_frame.show(ui, |ui| {
             // Use full available width in grid column
             ui.set_width(ui.available_width());
-            ui.set_min_height(260.0);
+            ui.set_min_height(80.0);
             
             ui.with_layout(
                 egui::Layout::top_down(egui::Align::Center).with_cross_justify(true),

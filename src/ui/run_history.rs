@@ -117,7 +117,7 @@ impl RunHistory {
                 // TODO: Implement export functionality
             }
             
-            if ui.button("🗑️ Clear History").clicked() {
+            if ui.button("🗑 Clear History").clicked() {
                 // TODO: Implement clear history with confirmation
             }
             

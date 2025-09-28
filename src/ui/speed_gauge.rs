@@ -12,7 +12,7 @@ impl SpeedGauge {
 
     pub fn show(&mut self, ui: &mut egui::Ui, speed_kmh: f32) {
         let (response, painter) =
-            ui.allocate_painter(Vec2::splat(self.size + 120.0), egui::Sense::hover());
+            ui.allocate_painter(Vec2::splat(self.size + 8.0), egui::Sense::hover());
 
         let center = response.rect.center();
         let outer_radius = self.size * 0.42;
