@@ -95,7 +95,7 @@ impl PowerTorqueChart {
                 &seismo_power_curve,
                 Color32::from_rgb(255, 80, 80),  // Bright red
                 0.0,
-                200.0, // 0-200 HP range
+                35.0, // 0-35 HP range (realistic for 150-250cc)
                 0.0,
                 max_time,
             );
@@ -107,7 +107,7 @@ impl PowerTorqueChart {
                 &seismo_power_curve,
                 Color32::from_rgba_premultiplied(255, 80, 80, 60),
                 0.0,
-                200.0,
+                35.0,
                 0.0,
                 max_time,
             );
@@ -120,7 +120,7 @@ impl PowerTorqueChart {
                 power_curve,
                 Color32::from_rgb(255, 80, 80),
                 0.0,
-                200.0,
+                35.0,
                 0.0,
                 max_time,
                 "HP",
@@ -135,7 +135,7 @@ impl PowerTorqueChart {
                 &seismo_torque_curve,
                 Color32::from_rgb(80, 150, 255), // Bright blue
                 0.0,
-                150.0, // 0-150 Nm range
+                30.0, // 0-30 Nm range (realistic for 150-250cc)
                 0.0,
                 max_time,
             );
@@ -147,7 +147,7 @@ impl PowerTorqueChart {
                 &seismo_torque_curve,
                 Color32::from_rgba_premultiplied(80, 150, 255, 60),
                 0.0,
-                150.0,
+                30.0,
                 0.0,
                 max_time,
             );
@@ -160,7 +160,7 @@ impl PowerTorqueChart {
                 torque_curve,
                 Color32::from_rgb(80, 150, 255),
                 0.0,
-                150.0,
+                30.0,
                 0.0,
                 max_time,
                 "Nm",
@@ -531,10 +531,10 @@ impl PowerTorqueChart {
             );
         }
 
-        // Left Y-axis labels (HP)
-        for i in 0..=8 {
-            let y = plot_rect.max.y - (i as f32 / 8.0) * plot_rect.height();
-            let hp = (i * 25) as i32; // 0 to 200 HP
+        // Left Y-axis labels (HP) - Updated for 150-250cc motorcycles
+        for i in 0..=10 {
+            let y = plot_rect.max.y - (i as f32 / 10.0) * plot_rect.height();
+            let hp = (i * 35 / 10) as i32; // 0 to 35 HP (0, 3.5, 7, 10.5, 14, 17.5, 21, 24.5, 28, 31.5, 35)
             painter.text(
                 Pos2::new(plot_rect.min.x - 15.0, y),
                 egui::Align2::RIGHT_CENTER,
@@ -544,10 +544,10 @@ impl PowerTorqueChart {
             );
         }
 
-        // Right Y-axis labels (Torque)
-        for i in 0..=6 {
-            let y = plot_rect.max.y - (i as f32 / 6.0) * plot_rect.height();
-            let torque = (i * 25) as i32; // 0 to 150 Nm
+        // Right Y-axis labels (Torque) - Updated for 150-250cc motorcycles
+        for i in 0..=10 {
+            let y = plot_rect.max.y - (i as f32 / 10.0) * plot_rect.height();
+            let torque = (i * 3) as i32; // 0 to 30 Nm (0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30)
             painter.text(
                 Pos2::new(plot_rect.max.x + 15.0, y),
                 egui::Align2::LEFT_CENTER,
@@ -827,7 +827,7 @@ impl PowerTorqueChart {
             if max_hp_index < seismo_power_curve.len() {
                 let (x, y) = seismo_power_curve[max_hp_index];
                 let normalized_x = if max_time > 0.0 { x / max_time } else { 0.0 };
-                let normalized_y = y / 200.0; // HP scale
+                let normalized_y = y / 35.0; // HP scale (0-35 HP for 150-250cc)
 
                 let screen_x = plot_rect.min.x + normalized_x * plot_rect.width();
                 let screen_y = plot_rect.max.y - normalized_y * plot_rect.height();
@@ -853,7 +853,7 @@ impl PowerTorqueChart {
             if max_torque_index < seismo_torque_curve.len() {
                 let (x, y) = seismo_torque_curve[max_torque_index];
                 let normalized_x = if max_time > 0.0 { x / max_time } else { 0.0 };
-                let normalized_y = y / 150.0; // Torque scale
+                let normalized_y = y / 30.0; // Torque scale (0-30 Nm for 150-250cc)
 
                 let screen_x = plot_rect.min.x + normalized_x * plot_rect.width();
                 let screen_y = plot_rect.max.y - normalized_y * plot_rect.height();

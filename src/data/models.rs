@@ -39,15 +39,15 @@ impl DynoData {
         Self {
             rpm: 1000.0, // Start at idle
             speed_kmh: 15.0,
-            horsepower: 10.0,
-            torque: 25.0,
+            horsepower: 8.0, // Realistic idle HP for 150-250cc
+            torque: 15.0, // Realistic idle torque for 150-250cc
             air_fuel_ratio: 13.2,
             lambda: 0.90,
             intake_temp: 25.3,
             coolant_temp: 98.5,
             oil_pressure: 6590.0,
-            peak_hp: 10.0,
-            peak_torque: 25.0,
+            peak_hp: 8.0, // Start with realistic initial peak
+            peak_torque: 15.0, // Start with realistic initial peak
             run_id: "#008".to_string(),
             test_date: "Date: 2024.07.22".to_string(),
             test_time: "Time: Yamaha R1".to_string(),
@@ -96,26 +96,26 @@ impl DynoData {
             // Calculate realistic HP and torque based on RPM
             let rpm_factor = (self.rpm - 1000.0) / 11000.0; // 0 to 1
             
-            // Realistic motorcycle power curve
+            // Realistic motorcycle power curve for 150-250cc
             self.horsepower = if rpm_factor < 0.3 {
-                10.0 + rpm_factor * 150.0 // Low end: 10-55 HP
+                8.0 + rpm_factor * 30.0 // Low end: 8-17 HP
             } else if rpm_factor < 0.7 {
-                55.0 + (rpm_factor - 0.3) * 250.0 // Mid range: 55-155 HP
+                17.0 + (rpm_factor - 0.3) * 75.0 // Mid range: 17-47 HP
             } else {
-                155.0 - (rpm_factor - 0.7) * 50.0 // High end: 155-140 HP
+                47.0 - (rpm_factor - 0.7) * 15.0 // High end: 47-42 HP
             };
             
             // Add power variations
             self.horsepower += (elapsed_total * 2.0).sin() * 3.0;
             self.horsepower = self.horsepower.max(8.0);
             
-            // Realistic motorcycle torque curve
+            // Realistic motorcycle torque curve for 150-250cc
             self.torque = if rpm_factor < 0.4 {
-                25.0 + rpm_factor * 125.0 // Low end: 25-75 Nm
+                15.0 + rpm_factor * 50.0 // Low end: 15-35 Nm
             } else if rpm_factor < 0.6 {
-                75.0 + (rpm_factor - 0.4) * 75.0 // Peak: 75-90 Nm
+                35.0 + (rpm_factor - 0.4) * 30.0 // Peak: 35-41 Nm
             } else {
-                90.0 - (rpm_factor - 0.6) * 50.0 // High end: 90-70 Nm
+                41.0 - (rpm_factor - 0.6) * 15.0 // High end: 41-35 Nm
             };
             
             // Add torque variations
@@ -251,12 +251,12 @@ impl DynoData {
         self.is_test_running = false;
         self.power_curve.clear();
         self.torque_curve.clear();
-        self.peak_hp = 10.0;
-        self.peak_torque = 25.0;
+        self.peak_hp = 8.0;
+        self.peak_torque = 15.0;
         self.rpm = 1000.0;
         self.speed_kmh = 15.0;
-        self.horsepower = 10.0;
-        self.torque = 25.0;
+        self.horsepower = 8.0;
+        self.torque = 15.0;
         self.start_time = Instant::now();
         // Reset speed smoothing
         self.prev_speed = 0.0;
