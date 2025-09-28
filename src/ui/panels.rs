@@ -342,7 +342,14 @@ impl PanelLayout {
                     ui.add_space(10.0);
 
                     // Use the actual PowerTorqueChart from charts.rs
-                    self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                    self.chart.show(
+                        ui, 
+                        &data.power_curve, 
+                        &data.torque_curve,
+                        data.rpm,
+                        data.horsepower,
+                        data.torque,
+                    );
                     
                     ui.add_space(10.0);
                 },
@@ -620,7 +627,7 @@ impl PanelLayout {
                 // Peak Torque card
                 self.large_metric_card(
                     ui,
-                    "max Torque",
+                    "Max Torque",
                     &format!("{:.1}", data.peak_torque),
                     "Nm",
                     Color32::from_rgb(50, 100, 180),

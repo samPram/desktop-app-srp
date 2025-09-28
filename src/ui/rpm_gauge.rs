@@ -342,7 +342,7 @@ impl RpmGauge {
             center + Vec2::new(0.0, 25.0),
             egui::Align2::CENTER_CENTER,
             &format!("{:.0}", rpm),
-            egui::FontId::proportional(16.0),
+            egui::FontId::proportional(20.0),
             Color32::from_rgb(200, 205, 215),
         );
     }
@@ -371,7 +371,7 @@ impl RpmGauge {
             left_pos + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_CENTER,
             "ENGINE",
-            egui::FontId::proportional(8.0),
+            egui::FontId::proportional(10.0),
             Color32::from_rgb(160, 165, 175),
         );
 
@@ -388,7 +388,7 @@ impl RpmGauge {
             right_pos + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_CENTER,
             "LIMIT",
-            egui::FontId::proportional(8.0),
+            egui::FontId::proportional(10.0),
             Color32::from_rgb(160, 165, 175),
         );
     }

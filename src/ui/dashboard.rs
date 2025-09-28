@@ -150,7 +150,14 @@ impl Dashboard {
                     ui.horizontal(|ui| {
                         ui.add_space(10.0);
                         ui.vertical(|ui| {
-                            self.chart.show(ui, &data.power_curve, &data.torque_curve);
+                            self.chart.show(
+                                ui, 
+                                &data.power_curve, 
+                                &data.torque_curve,
+                                data.rpm,
+                                data.horsepower,
+                                data.torque,
+                            );
                         });
                     });
                 });

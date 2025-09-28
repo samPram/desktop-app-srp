@@ -362,7 +362,7 @@ impl SpeedGauge {
             center + Vec2::new(0.0, 25.0),
             egui::Align2::CENTER_CENTER,
             &format!("{:.0} mph", mph),
-            egui::FontId::proportional(14.0),
+            egui::FontId::proportional(20.0),
             Color32::from_rgb(180, 190, 210),
         );
     }
@@ -391,7 +391,7 @@ impl SpeedGauge {
             left_pos + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_CENTER,
             "CRUISE",
-            egui::FontId::proportional(8.0),
+            egui::FontId::proportional(10.0),
             Color32::from_rgb(140, 160, 200),
         );
 
@@ -410,7 +410,7 @@ impl SpeedGauge {
             right_pos + Vec2::new(0.0, 15.0),
             egui::Align2::CENTER_CENTER,
             "FAST",
-            egui::FontId::proportional(8.0),
+            egui::FontId::proportional(10.0),
             Color32::from_rgb(140, 160, 200),
         );
 
