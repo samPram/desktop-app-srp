@@ -1,13 +1,17 @@
 use crate::data::models::DynoData;
+use crate::data::repository::TestRepository;
+use crate::data::db_models::Motorcycle;
 use crate::ui::charts::PowerTorqueChart;
 use crate::ui::data_panel::DataPanel;
 use crate::ui::gauges::CircularGauge;
+use crate::ui::motorcycle_modal::{MotorcycleModal, MotorcycleInfoPanel};
 use crate::ui::panels::PanelLayout;
 use crate::ui::rpm_gauge::RpmGauge;
 use crate::ui::run_history::RunHistory;
 use crate::ui::sidebar::{Sidebar, SidebarItem};
 use crate::ui::speed_gauge::SpeedGauge;
 use eframe::egui::{self, Color32, RichText, Stroke};
+use std::sync::Arc;
 
 pub struct Dashboard {
     sidebar: Sidebar,
@@ -18,6 +22,10 @@ pub struct Dashboard {
     panel_layout: PanelLayout,
     run_history: RunHistory,
     use_panel_layout: bool,
+    motorcycle_modal: MotorcycleModal,
+    motorcycle_info: MotorcycleInfoPanel,
+    current_motorcycle: Option<Motorcycle>,
+    test_started: bool,
 }
 
 impl Dashboard {
@@ -43,10 +51,22 @@ impl Dashboard {
             panel_layout: PanelLayout::new(),
             run_history: RunHistory::new(),
             use_panel_layout: true,
+            motorcycle_modal: MotorcycleModal::new(),
+            motorcycle_info: MotorcycleInfoPanel::new(),
+            current_motorcycle: None,
+            test_started: false,
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData, repository: Option<Arc<TestRepository>>) {
+        // Handle motorcycle modal
+        if let Some(motorcycle) = self.motorcycle_modal.show_modal(ui.ctx(), repository.clone()) {
+            log::info!("Motorcycle selected: {} {} {}", motorcycle.brand, motorcycle.model, motorcycle.year);
+            self.current_motorcycle = Some(motorcycle.clone());
+            self.motorcycle_info.set_motorcycle(Some(motorcycle));
+            self.test_started = false; // Reset test state
+        }
+
         // Set dark theme
         let mut style = (*ui.ctx().style()).clone();
         style.visuals.dark_mode = true;
@@ -58,7 +78,7 @@ impl Dashboard {
         // Choose layout mode
         if self.use_panel_layout {
             // Panel layout mode - sidebar is integrated in left panel
-            self.panel_layout.show(ui, data);
+            self.panel_layout.show(ui, data, repository);
         } else {
             // Classic layout mode - separate sidebar
             ui.horizontal(|ui| {
@@ -74,8 +94,8 @@ impl Dashboard {
 
                 // Main content area
                 ui.vertical(|ui| match self.sidebar.selected_item() {
-                    SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
-                    SidebarItem::RunHistory => self.show_run_history_content(ui),
+                    SidebarItem::Dashboard => self.show_dashboard_content(ui, data, repository.clone()),
+                    SidebarItem::RunHistory => self.show_run_history_content(ui, repository),
                     _ => {
                         ui.centered_and_justified(|ui| {
                             ui.label(RichText::new("Feature coming soon...").size(18.0));
@@ -86,7 +106,7 @@ impl Dashboard {
         }
     }
 
-    fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+    fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData, _repository: Option<Arc<TestRepository>>) {
         // Status bar at bottom
         let _available_height = ui.available_height() - 30.0; // Reserve space for status bar
 
@@ -170,9 +190,94 @@ impl Dashboard {
             ui.add_space(10.0);
             ui.separator();
 
-            // Right section - data panel
+            // Right section - motorcycle info and data panel
             ui.vertical(|ui| {
                 ui.add_space(10.0);
+                
+                // Motorcycle info panel
+                self.motorcycle_info.show(ui);
+                
+                ui.add_space(15.0);
+                
+                // Test control button
+                if self.current_motorcycle.is_none() {
+                    ui.vertical_centered(|ui| {
+                        let start_button = ui.add_sized(
+                            [200.0, 40.0],
+                            egui::Button::new(RichText::new("Start Test").size(16.0))
+                                .fill(Color32::from_rgb(60, 120, 60))
+                        );
+                        
+                        if start_button.clicked() {
+                            self.motorcycle_modal.open();
+                        }
+                        
+                        ui.add_space(5.0);
+                        ui.small("Select a motorcycle to begin testing");
+                    });
+                } else if !self.test_started {
+                    ui.vertical_centered(|ui| {
+                        let start_button = ui.add_sized(
+                            [200.0, 40.0],
+                            egui::Button::new(RichText::new("Begin Test").size(16.0))
+                                .fill(Color32::from_rgb(60, 120, 60))
+                        );
+                        
+                        if start_button.clicked() {
+                            self.test_started = true;
+                            log::info!("Test started for motorcycle: {:?}", self.current_motorcycle.as_ref().map(|m| format!("{} {}", m.brand, m.model)));
+                        }
+                        
+                        ui.add_space(10.0);
+                        
+                        let change_button = ui.add_sized(
+                            [150.0, 30.0],
+                            egui::Button::new("Change Motorcycle")
+                        );
+                        
+                        if change_button.clicked() {
+                            self.current_motorcycle = None;
+                            self.motorcycle_info.set_motorcycle(None);
+                            self.test_started = false;
+                        }
+                    });
+                } else {
+                    ui.vertical_centered(|ui| {
+                        ui.colored_label(Color32::GREEN, "● Test in progress");
+                        
+                        ui.add_space(10.0);
+                        
+                        let stop_button = ui.add_sized(
+                            [200.0, 40.0],
+                            egui::Button::new(RichText::new("Stop Test").size(16.0))
+                                .fill(Color32::from_rgb(180, 60, 60))
+                        );
+                        
+                        if stop_button.clicked() {
+                            self.test_started = false;
+                            log::info!("Test stopped");
+                        }
+                        
+                        ui.add_space(10.0);
+                        
+                        let change_button = ui.add_sized(
+                            [150.0, 30.0],
+                            egui::Button::new("Change Motorcycle")
+                        );
+                        
+                        if change_button.clicked() {
+                            self.current_motorcycle = None;
+                            self.motorcycle_info.set_motorcycle(None);
+                            self.test_started = false;
+                        }
+                    });
+                }
+                
+                ui.add_space(15.0);
+                ui.separator();
+                ui.add_space(10.0);
+                
+                // Data panel below motorcycle info
                 self.data_panel.show(ui, data);
             });
         });
@@ -268,7 +373,7 @@ impl Dashboard {
         self.panel_layout.is_bottom_panel_visible()
     }
 
-    fn show_run_history_content(&mut self, ui: &mut egui::Ui) {
+    fn show_run_history_content(&mut self, ui: &mut egui::Ui, repository: Option<Arc<TestRepository>>) {
         // Run History page - use full width without data panel
         ui.set_min_height(ui.available_height());
         
@@ -276,7 +381,7 @@ impl Dashboard {
         ui.add_space(10.0);
         
         // Show run history component
-        self.run_history.show(ui);
+        self.run_history.show(ui, repository);
     }
 
     fn torque_hp_widget(
@@ -312,5 +417,8 @@ impl Dashboard {
                     });
                 });
             });
+    }
+    pub fn is_test_started(&self) -> bool {
+        self.test_started
     }
 }

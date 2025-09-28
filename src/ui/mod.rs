@@ -2,6 +2,7 @@ pub mod charts;
 pub mod dashboard;
 pub mod data_panel;
 pub mod gauges;
+pub mod motorcycle_modal;
 pub mod panels;
 mod rpm_gauge;
 pub mod run_controls;

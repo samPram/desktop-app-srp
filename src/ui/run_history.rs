@@ -1,5 +1,10 @@
 use eframe::egui::{self, Color32, RichText, Stroke};
 use egui_extras::{Column, TableBuilder};
+use crate::data::repository::TestRepository;
+use crate::data::db_models::{TestSession, Motorcycle, Operator};
+use crate::export::PdfExporter;
+use std::sync::Arc;
+use chrono::NaiveDateTime;
 
 #[derive(Debug, Clone)]
 pub struct TestRun {
@@ -22,6 +27,8 @@ pub struct RunHistory {
     sort_column: SortColumn,
     sort_ascending: bool,
     search_text: String,
+    repository: Option<Arc<TestRepository>>,
+    export_status: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,10 +51,59 @@ impl RunHistory {
             sort_column: SortColumn::Id,
             sort_ascending: false, // Default to newest first
             search_text: String::new(),
+            repository: None,
+            export_status: String::new(),
+        }
+    }
+    
+    pub fn set_repository(&mut self, repository: Arc<TestRepository>) {
+        self.repository = Some(repository);
+        self.refresh_from_database();
+    }
+    
+    fn refresh_from_database(&mut self) {
+        if let Some(repo) = &self.repository {
+            match repo.get_test_sessions(Some(100)) {
+                Ok(sessions) => {
+                    self.test_runs = sessions.into_iter().map(|summary| {
+                        TestRun {
+                            id: summary.test_session.id as u32,
+                            date: summary.test_session.start_time.format("%Y-%m-%d").to_string(),
+                            time: summary.test_session.start_time.format("%H:%M:%S").to_string(),
+                            motorcycle: format!("{} {} ({}cc)", 
+                                summary.motorcycle.brand, 
+                                summary.motorcycle.model,
+                                summary.motorcycle.engine_cc
+                            ),
+                            operator: summary.operator.full_name.clone(),
+                            max_hp: summary.test_session.max_hp.unwrap_or(0.0),
+                            max_torque: summary.test_session.max_torque.unwrap_or(0.0),
+                            max_rpm: summary.test_session.max_rpm.unwrap_or(0.0),
+                            test_duration: if let Some(duration) = summary.test_session.duration_seconds {
+                                format!("{}s", duration)
+                            } else {
+                                "N/A".to_string()
+                            },
+                            status: summary.test_session.status.clone(),
+                            notes: summary.test_session.notes.unwrap_or_default(),
+                        }
+                    }).collect();
+                }
+                Err(e) => {
+                    log::error!("Failed to load test sessions: {}", e);
+                    self.test_runs = Self::generate_sample_data();
+                }
+            }
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui) {
+    pub fn show(&mut self, ui: &mut egui::Ui, repository: Option<Arc<TestRepository>>) {
+        // Update repository if provided
+        if let Some(repo) = repository {
+            if self.repository.is_none() {
+                self.set_repository(repo);
+            }
+        }
         // Set dark theme
         let mut style = (*ui.ctx().style()).clone();
         style.visuals.dark_mode = true;
@@ -84,7 +140,7 @@ impl RunHistory {
     fn show_header(&self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.label(
-                RichText::new("🏍️ Run History")
+                RichText::new("🏍 Run History")
                     .size(24.0)
                     .strong()
                     .color(Color32::WHITE)
@@ -114,7 +170,13 @@ impl RunHistory {
             ui.add_space(20.0);
             
             if ui.button("📤 Export").clicked() {
-                // TODO: Implement export functionality
+                if let Some(selected_idx) = self.selected_run {
+                    if selected_idx < self.test_runs.len() {
+                        self.export_selected_test(selected_idx);
+                    }
+                } else {
+                    self.export_status = "Please select a test run to export".to_string();
+                }
             }
             
             if ui.button("🗑 Clear History").clicked() {
@@ -122,7 +184,14 @@ impl RunHistory {
             }
             
             if ui.button("🔄 Refresh").clicked() {
-                // TODO: Implement refresh from database
+                self.refresh_from_database();
+                self.export_status = "Data refreshed from database".to_string();
+            }
+            
+            // Show export status
+            if !self.export_status.is_empty() {
+                ui.add_space(10.0);
+                ui.label(RichText::new(&self.export_status).color(Color32::YELLOW));
             }
         });
     }
@@ -341,7 +410,7 @@ impl RunHistory {
         }
     }
 
-    fn show_run_details(&self, ui: &mut egui::Ui, run: &TestRun) {
+    fn show_run_details(&mut self, ui: &mut egui::Ui, run: &TestRun) {
         ui.separator();
         ui.label(RichText::new("📋 Run Details").size(18.0).strong());
         
@@ -433,10 +502,12 @@ impl RunHistory {
                         }
                         
                         if ui.button("📄 Export Report").clicked() {
-                            // TODO: Export run report
+                            if let Some(selected_idx) = self.selected_run {
+                                self.export_selected_test(selected_idx);
+                            }
                         }
                         
-                        if ui.button("🗑️ Delete Run").clicked() {
+                        if ui.button("🗑 Delete Run").clicked() {
                             // TODO: Delete run with confirmation
                         }
                     });
@@ -606,5 +677,35 @@ impl RunHistory {
                 notes: "Excellent torque curve for a naked bike. Great low-end power.".to_string(),
             },
         ]
+    }
+    
+    fn export_selected_test(&mut self, selected_idx: usize) {
+        if let Some(repo) = &self.repository {
+            if selected_idx < self.test_runs.len() {
+                let test_run = &self.test_runs[selected_idx];
+                let session_id = test_run.id as i32;
+                
+                // Generate filename with timestamp
+                let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
+                let filename = format!("DynoTest_Run{}_{}.pdf", test_run.id, timestamp);
+                
+                // Create PDF exporter
+                let exporter = PdfExporter::new(repo.clone());
+                
+                // Export to PDF
+                match exporter.export_test_session(session_id, &filename) {
+                    Ok(()) => {
+                        self.export_status = format!("Report exported successfully: {}", filename);
+                        log::info!("PDF export successful: {}", filename);
+                    }
+                    Err(e) => {
+                        self.export_status = format!("Export failed: {:?}", e);
+                        log::error!("PDF export failed: {:?}", e);
+                    }
+                }
+            }
+        } else {
+            self.export_status = "Database not available for export".to_string();
+        }
     }
 }

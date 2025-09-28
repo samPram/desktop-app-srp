@@ -209,44 +209,6 @@ impl Sidebar {
         clicked
     }
 
-    // Alternative method without icons for simpler look
-    fn nav_item_simple(&mut self, ui: &mut egui::Ui, text: &str, item: SidebarItem) -> bool {
-        let is_selected = self.selected_item == item;
-        let mut clicked = false;
-
-        ui.horizontal(|ui| {
-            ui.add_space(10.0);
-
-            let button_color = if is_selected {
-                Color32::from_rgb(60, 60, 70)
-            } else {
-                Color32::TRANSPARENT
-            };
-
-            let text_color = if is_selected {
-                Color32::WHITE
-            } else {
-                Color32::from_rgb(200, 200, 200)
-            };
-
-            let response = ui.add_sized(
-                [200.0, 35.0],
-                egui::Button::new(RichText::new(text).color(text_color).size(14.0))
-                    .fill(button_color)
-                    .stroke(Stroke::NONE)
-                    .rounding(Rounding::same(6.0)),
-            );
-
-            if response.clicked() {
-                self.selected_item = item;
-                clicked = true;
-            }
-        });
-
-        ui.add_space(3.0);
-        clicked
-    }
-
     pub fn selected_item(&self) -> &SidebarItem {
         &self.selected_item
     }

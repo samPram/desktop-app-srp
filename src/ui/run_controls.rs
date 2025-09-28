@@ -1,7 +1,12 @@
 use crate::data::models::DynoData;
+use crate::data::repository::TestRepository;
+use crate::data::db_models::Motorcycle;
 use crate::dyno::serial_comm::{SerialConnection, ConnectionStatus};
+use crate::ui::motorcycle_modal::MotorcycleModal;
+use crate::ui::panels::TestState;
 use eframe::egui::{self, Button, Color32, RichText, ComboBox};
 use log::{info, warn, error, debug};
+use std::sync::Arc;
 
 pub struct RunControls {
     is_running: bool,
@@ -40,7 +45,37 @@ impl RunControls {
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+    pub fn show(
+        &mut self, 
+        ui: &mut egui::Ui, 
+        data: &mut DynoData,
+        repository: Option<Arc<TestRepository>>,
+        motorcycle_modal: &mut MotorcycleModal,
+        motorcycle_info: &mut Option<Motorcycle>,
+        test_state: &mut TestState,
+    ) {
+        self.show_with_motorcycle_support(ui, data, repository, motorcycle_modal, motorcycle_info, test_state);
+    }
+    
+    // Legacy method for classic layout compatibility
+    pub fn show_classic(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+        // Create dummy variables for classic layout
+        let mut dummy_modal = MotorcycleModal::new();
+        let mut dummy_motorcycle = None;
+        let mut dummy_test_state = TestState::NoMotorcycle;
+        
+        self.show_with_motorcycle_support(ui, data, None, &mut dummy_modal, &mut dummy_motorcycle, &mut dummy_test_state);
+    }
+    
+    fn show_with_motorcycle_support(
+        &mut self, 
+        ui: &mut egui::Ui, 
+        data: &mut DynoData,
+        repository: Option<Arc<TestRepository>>,
+        motorcycle_modal: &mut MotorcycleModal,
+        motorcycle_info: &mut Option<Motorcycle>,
+        test_state: &mut TestState,
+    ) {
         ui.vertical(|ui| {
             // Connection controls row
             ui.horizontal(|ui| {
@@ -151,7 +186,7 @@ impl RunControls {
                     )
                     .clicked()
                 {
-                    self.toggle_test(data);
+                    self.toggle_test(data, repository, motorcycle_modal, motorcycle_info, test_state);
                 }
 
                 ui.add_space(10.0);
@@ -213,10 +248,6 @@ impl RunControls {
         }
     }
 
-    pub fn is_running(&self) -> bool {
-        self.is_running
-    }
-
     pub fn is_emergency_stop(&self) -> bool {
         self.emergency_stop
     }
@@ -227,13 +258,41 @@ impl RunControls {
         data.reset_data();
     }
 
-    fn toggle_test(&mut self, data: &mut DynoData) {
-        self.is_running = !self.is_running;
+    fn toggle_test(
+        &mut self, 
+        data: &mut DynoData,
+        repository: Option<Arc<TestRepository>>,
+        motorcycle_modal: &mut MotorcycleModal,
+        motorcycle_info: &mut Option<Motorcycle>,
+        test_state: &mut TestState,
+    ) {
         if !self.is_running {
+            // Starting test - check if we have a motorcycle selected
+            match test_state {
+                TestState::NoMotorcycle => {
+                    // Need to select motorcycle first
+                    motorcycle_modal.open();
+                    return; // Don't start test yet
+                },
+                TestState::MotorcycleSelected => {
+                    // We have a motorcycle, start the test
+                    *test_state = TestState::TestRunning;
+                    self.is_running = true;
+                    data.start_test();
+                    log::info!("Test started for motorcycle: {:?}", motorcycle_info.as_ref().map(|m| format!("{} {}", m.brand, m.model)));
+                },
+                TestState::TestRunning => {
+                    // This shouldn't happen when starting
+                    return;
+                }
+            }
+        } else {
+            // Stopping test
+            self.is_running = false;
             self.emergency_stop = false;
             data.stop_test();
-        } else {
-            data.start_test();
+            *test_state = TestState::MotorcycleSelected; // Keep motorcycle selected
+            log::info!("Test stopped");
         }
 
         // Send commands to Arduino if connected

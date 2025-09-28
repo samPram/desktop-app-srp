@@ -33,6 +33,19 @@ thiserror = "1.0"
 # Random number generation for simulation
 rand = "0.8"
 
+# Database
+diesel = { version = "2.1", features = ["sqlite", "chrono", "r2d2"] }
+diesel_migrations = "2.1"
+
+# Date and time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Environment variables
+dotenv = "0.15"
+
+# PDF generation
+printpdf = { version = "0.7", features = ["embedded_images"] }
+
 [dev-dependencies]
 # Development tools (install with: cargo install cargo-watch cargo-audit)
 # cargo-watch = "8.0"  # Commented as this is a binary, not a library dependency

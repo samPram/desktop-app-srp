@@ -367,16 +367,6 @@ impl SpeedGauge {
         );
     }
 
-    fn draw_bottom_label(&self, painter: &egui::Painter, center: Pos2, outer_radius: f32) {
-        painter.text(
-            center + Vec2::new(0.0, outer_radius + 45.0),
-            egui::Align2::CENTER_CENTER,
-            "SPEED",
-            egui::FontId::proportional(14.0),
-            Color32::from_rgb(140, 160, 200),
-        );
-    }
-
     fn draw_speed_indicators(&self, painter: &egui::Painter, center: Pos2, outer_radius: f32, speed: f32) {
         // Left indicator - Speed limit warning
         let left_pos = center + Vec2::new(-outer_radius * 0.6, outer_radius * 0.7);

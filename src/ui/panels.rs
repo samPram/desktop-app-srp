@@ -1,11 +1,15 @@
 use crate::data::models::DynoData;
+use crate::data::repository::TestRepository;
+use crate::data::db_models::Motorcycle;
 use crate::ui::charts::PowerTorqueChart;
+use crate::ui::motorcycle_modal::MotorcycleModal;
 use crate::ui::rpm_gauge::RpmGauge;
 use crate::ui::run_controls::RunControls;
 use crate::ui::run_history::RunHistory;
 use crate::ui::sidebar::{Sidebar, SidebarItem};
 use crate::ui::speed_gauge::SpeedGauge;
 use eframe::egui::{self, Color32, Frame, Margin, RichText, Rounding, Stroke, Vec2};
+use std::sync::Arc;
 
 pub struct PanelLayout {
     chart: PowerTorqueChart,
@@ -21,6 +25,17 @@ pub struct PanelLayout {
     show_left_panel: bool,
     show_right_panel: bool,
     show_bottom_panel: bool,
+    // Motorcycle modal functionality
+    motorcycle_modal: MotorcycleModal,
+    motorcycle_info: Option<Motorcycle>,
+    test_state: TestState,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TestState {
+    NoMotorcycle,
+    MotorcycleSelected,
+    TestRunning,
 }
 
 impl PanelLayout {
@@ -37,10 +52,13 @@ impl PanelLayout {
             show_left_panel: true,
             show_right_panel: true,
             show_bottom_panel: true,
+            motorcycle_modal: MotorcycleModal::new(),
+            motorcycle_info: None,
+            test_state: TestState::NoMotorcycle,
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+    pub fn show(&mut self, ui: &mut egui::Ui, data: &mut DynoData, repository: Option<Arc<TestRepository>>) {
         // Set dark theme
         let mut style = (*ui.ctx().style()).clone();
         style.visuals.dark_mode = true;
@@ -67,7 +85,7 @@ impl PanelLayout {
                             ui.add_space(20.0);
                             // ui.heading(RichText::new("Dyno Control Panel").size(20.0).color(Color32::WHITE));
                             ui.horizontal(|ui| {
-                                self.run_controls.show(ui, data);
+                                self.run_controls.show(ui, data, repository.clone(), &mut self.motorcycle_modal, &mut self.motorcycle_info, &mut self.test_state);
                             });
                         });
                     });
@@ -182,27 +200,42 @@ impl PanelLayout {
 
                         // Bottom section - Test Information (fixed)
                         self.show_test_information_section(ui, data);
+                        
+                        ui.add_space(10.0);
+                        ui.separator();
+                        ui.add_space(10.0);
+                        
+                        // Motorcycle information is now integrated into Test Information section above
                     });
                 });
         }
 
         // Central panel - Main content area based on sidebar selection
-        self.show_content_based_on_selection(ui, data);
+        self.show_content_based_on_selection(ui, data, repository.clone());
+
+        // Handle motorcycle modal
+        if let Some(repo) = repository.clone() {
+            if let Some(selected_motorcycle) = self.motorcycle_modal.show_modal(ui.ctx(), Some(repo)) {
+                log::info!("Motorcycle selected: {} {} {}", selected_motorcycle.brand, selected_motorcycle.model, selected_motorcycle.year);
+                self.motorcycle_info = Some(selected_motorcycle);
+                self.test_state = TestState::MotorcycleSelected;
+            }
+        }
     }
 
     // Content switching based on sidebar selection
-    fn show_content_based_on_selection(&mut self, ui: &mut egui::Ui, data: &mut DynoData) {
+    fn show_content_based_on_selection(&mut self, ui: &mut egui::Ui, data: &mut DynoData, repository: Option<Arc<TestRepository>>) {
         match self.current_page {
-            SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+            SidebarItem::Dashboard => self.show_dashboard_content(ui, data, repository),
             SidebarItem::DynData => self.show_dyn_data_content(ui, data),
-            SidebarItem::RunHistory => self.show_run_history_content(ui, data),
+            SidebarItem::RunHistory => self.show_run_history_content(ui, data, repository),
             SidebarItem::Reports => self.show_reports_content(ui, data),
             SidebarItem::Configuration => self.show_configuration_content(ui, data),
         }
     }
 
     // Main dashboard container following egui example pattern
-    fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData) {
+    fn show_dashboard_content(&mut self, ui: &mut egui::Ui, data: &DynoData, repository: Option<Arc<TestRepository>>) {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.vertical_centered(|ui| {
                 ui.heading("Dashboard");
@@ -454,12 +487,12 @@ impl PanelLayout {
         });
     }
 
-    fn show_run_history_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData) {
+    fn show_run_history_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData, repository: Option<Arc<TestRepository>>) {
         // Run History - show without right panel, use full width
         egui::CentralPanel::default().show_inside(ui, |ui| {
             // Add some padding and show the run history component
             ui.add_space(10.0);
-            self.run_history.show(ui);
+            self.run_history.show(ui, repository);
         });
     }
 
@@ -526,11 +559,6 @@ impl PanelLayout {
 
     pub fn is_bottom_panel_visible(&self) -> bool {
         self.show_bottom_panel
-    }
-
-    // Sidebar delegation methods
-    pub fn selected_item(&self) -> SidebarItem {
-        self.sidebar.selected_item().clone()
     }
 
     // Right panel section methods
@@ -650,7 +678,19 @@ impl PanelLayout {
             // Test info items
             self.test_info_item(ui, "Run ID:", &format!("#{:03}", data.run_id));
             self.test_info_item(ui, "Date:", "2024-07-26");
-            self.test_info_item(ui, "Motorcycle:", "Yamaha R1");
+            
+            // Motorcycle information integrated into test info
+            if let Some(motorcycle) = &self.motorcycle_info {
+                self.test_info_item(ui, "Motorcycle:", &format!("{} {}", motorcycle.brand, motorcycle.model));
+                self.test_info_item(ui, "Year:", &motorcycle.year.to_string());
+                self.test_info_item(ui, "Engine:", &format!("{} cc", motorcycle.engine_cc));
+                if let Some(plate) = &motorcycle.license_plate {
+                    self.test_info_item(ui, "Plate:", plate);
+                }
+            } else {
+                self.test_info_item(ui, "Motorcycle:", "Not selected");
+            }
+            
             self.test_info_item(ui, "Time:", "00:02:10");
         });
     }
@@ -736,4 +776,17 @@ impl PanelLayout {
         });
         ui.add_space(4.0);
     }
+    
+    // Start test logic moved to run_controls
+    
+    // Getter methods for test state management
+    pub fn get_test_state(&self) -> &TestState {
+        &self.test_state
+    }
+    
+    pub fn get_motorcycle_info(&self) -> &Option<Motorcycle> {
+        &self.motorcycle_info
+    }
+    
+    // motorcycle_info_item method removed - using test_info_item instead
 }

@@ -4,14 +4,32 @@ mod app;
 mod config;
 mod data;
 mod dyno;
+mod export;
 mod ui;
 mod utils;
+mod test_db;
 
 fn main() -> Result<(), eframe::Error> {
     // Suppress XDG Settings Portal timeout warnings by setting environment variable
     std::env::set_var("ADWAITA_DISABLE_PORTAL", "1");
     
     env_logger::init();
+
+    // Check command line arguments for database testing
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 && args[1] == "test-db" {
+        println!("Running database test...");
+        match test_db::test_database_setup() {
+            Ok(()) => {
+                println!("Database test completed successfully!");
+                return Ok(());
+            }
+            Err(e) => {
+                eprintln!("Database test failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+    }
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()

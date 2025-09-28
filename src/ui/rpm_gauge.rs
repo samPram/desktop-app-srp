@@ -347,16 +347,6 @@ impl RpmGauge {
         );
     }
 
-    fn draw_bottom_label(&self, painter: &egui::Painter, center: Pos2, outer_radius: f32) {
-        painter.text(
-            center + Vec2::new(0.0, outer_radius + 45.0),
-            egui::Align2::CENTER_CENTER,
-            "ENGINE RPM",
-            egui::FontId::proportional(14.0),
-            Color32::from_rgb(160, 165, 175),
-        );
-    }
-
     fn draw_status_indicators(&self, painter: &egui::Painter, center: Pos2, outer_radius: f32, rpm: f32) {
         // Left indicator - Engine status
         let left_pos = center + Vec2::new(-outer_radius * 0.6, outer_radius * 0.7);

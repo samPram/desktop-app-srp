@@ -3,7 +3,6 @@ use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Vec2, Rounding, FontId};
 pub struct PowerTorqueChart {
     width: f32,
     height: f32,
-    max_data_points: usize,
     current_rpm: f32,
     current_hp: f32,
     current_torque: f32,
@@ -18,7 +17,6 @@ impl PowerTorqueChart {
         Self {
             width: 600.0,
             height: 350.0,
-            max_data_points: 300,
             current_rpm: 0.0,
             current_hp: 0.0,
             current_torque: 0.0,
@@ -205,41 +203,6 @@ impl PowerTorqueChart {
             Rounding::same(8.0),
             Color32::from_rgb(20, 23, 30)
         );
-    }
-
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
-        let major_grid_color = Color32::from_rgb(45, 50, 60);
-        let minor_grid_color = Color32::from_rgb(35, 40, 50);
-
-        // Major vertical grid lines (every 2500 RPM)
-        for i in 0..=6 {
-            let x = rect.min.x + (i as f32 / 6.0) * rect.width();
-            let stroke = if i % 2 == 0 {
-                Stroke::new(1.0, major_grid_color)
-            } else {
-                Stroke::new(0.5, minor_grid_color)
-            };
-
-            painter.line_segment(
-                [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-                stroke,
-            );
-        }
-
-        // Major horizontal grid lines
-        for i in 0..=8 {
-            let y = rect.min.y + (i as f32 / 8.0) * rect.height();
-            let stroke = if i % 2 == 0 {
-                Stroke::new(1.0, major_grid_color)
-            } else {
-                Stroke::new(0.5, minor_grid_color)
-            };
-
-            painter.line_segment(
-                [Pos2::new(rect.min.x, y), Pos2::new(rect.max.x, y)],
-                stroke,
-            );
-        }
     }
 
     fn draw_axes(&self, painter: &egui::Painter, plot_rect: Rect, chart_rect: Rect, min_rpm: f32, max_rpm: f32) {

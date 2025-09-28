@@ -1,17 +1,34 @@
 use crate::data::models::DynoData;
+use crate::data::database::establish_connection;
+use crate::data::repository::TestRepository;
 use crate::ui::dashboard::Dashboard;
 use eframe::egui;
+use std::sync::Arc;
 
 pub struct DesktopApp {
     dashboard: Dashboard,
     dyno_data: DynoData,
+    db_repository: Option<Arc<TestRepository>>,
 }
 
 impl DesktopApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        // Initialize database connection
+        let db_repository = match establish_connection() {
+            Ok(connection) => {
+                log::info!("Database connection established successfully");
+                Some(Arc::new(TestRepository::new(connection)))
+            }
+            Err(e) => {
+                log::error!("Failed to establish database connection: {}", e);
+                None
+            }
+        };
+
         Self {
             dashboard: Dashboard::new(),
             dyno_data: DynoData::new(),
+            db_repository,
         }
     }
 }
@@ -82,7 +99,7 @@ impl eframe::App for DesktopApp {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.dashboard.show(ui, &mut self.dyno_data);
+            self.dashboard.show(ui, &mut self.dyno_data, self.db_repository.clone());
         });
 
         // Request repaint for continuous updates

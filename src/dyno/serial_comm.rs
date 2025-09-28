@@ -254,11 +254,6 @@ impl SerialConnection {
         }
     }
 
-    /// Send START command to Arduino to begin dyno testing
-    pub fn start_dyno_test(&mut self) -> Result<(), SerialError> {
-        self.send_command("START")
-    }
-
     /// Send STOP command to Arduino to stop dyno testing
     pub fn stop_dyno_test(&mut self) -> Result<(), SerialError> {
         self.send_command("STOP")
