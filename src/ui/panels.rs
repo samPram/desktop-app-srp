@@ -2,6 +2,7 @@ use crate::data::models::DynoData;
 use crate::ui::charts::PowerTorqueChart;
 use crate::ui::rpm_gauge::RpmGauge;
 use crate::ui::run_controls::RunControls;
+use crate::ui::run_history::RunHistory;
 use crate::ui::sidebar::{Sidebar, SidebarItem};
 use crate::ui::speed_gauge::SpeedGauge;
 use eframe::egui::{self, Color32, Frame, Margin, RichText, Rounding, Stroke, Vec2};
@@ -13,6 +14,7 @@ pub struct PanelLayout {
     rpm_gauge: RpmGauge,
     speed_gauge: SpeedGauge,
     run_controls: RunControls,
+    run_history: RunHistory,
     sidebar: Sidebar,
     current_page: SidebarItem, // Add current page state
     show_top_panel: bool,
@@ -28,6 +30,7 @@ impl PanelLayout {
             speed_gauge: SpeedGauge::new(),
             chart: PowerTorqueChart::new(),
             run_controls: RunControls::new(),
+            run_history: RunHistory::new(),
             sidebar: Sidebar::new(),
             current_page: SidebarItem::Dashboard, // Initialize with Dashboard
             show_top_panel: true,
@@ -452,14 +455,11 @@ impl PanelLayout {
     }
 
     fn show_run_history_content(&mut self, ui: &mut egui::Ui, _data: &mut DynoData) {
+        // Run History - show without right panel, use full width
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.heading("Run History");
-                ui.add_space(20.0);
-                ui.label("View and manage previous dyno test runs");
-                ui.add_space(10.0);
-                ui.label("🚧 Coming Soon...");
-            });
+            // Add some padding and show the run history component
+            ui.add_space(10.0);
+            self.run_history.show(ui);
         });
     }
 

@@ -5,6 +5,7 @@ pub mod gauges;
 pub mod panels;
 mod rpm_gauge;
 pub mod run_controls;
+pub mod run_history;
 pub mod sidebar;
 mod speed_gauge;
 pub mod styles;

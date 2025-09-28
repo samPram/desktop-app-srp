@@ -4,6 +4,7 @@ use crate::ui::data_panel::DataPanel;
 use crate::ui::gauges::CircularGauge;
 use crate::ui::panels::PanelLayout;
 use crate::ui::rpm_gauge::RpmGauge;
+use crate::ui::run_history::RunHistory;
 use crate::ui::sidebar::{Sidebar, SidebarItem};
 use crate::ui::speed_gauge::SpeedGauge;
 use eframe::egui::{self, Color32, RichText, Stroke};
@@ -15,6 +16,7 @@ pub struct Dashboard {
     chart: PowerTorqueChart,
     data_panel: DataPanel,
     panel_layout: PanelLayout,
+    run_history: RunHistory,
     use_panel_layout: bool,
 }
 
@@ -39,6 +41,7 @@ impl Dashboard {
             chart: PowerTorqueChart::new(),
             data_panel: DataPanel::new(),
             panel_layout: PanelLayout::new(),
+            run_history: RunHistory::new(),
             use_panel_layout: true,
         }
     }
@@ -72,6 +75,7 @@ impl Dashboard {
                 // Main content area
                 ui.vertical(|ui| match self.sidebar.selected_item() {
                     SidebarItem::Dashboard => self.show_dashboard_content(ui, data),
+                    SidebarItem::RunHistory => self.show_run_history_content(ui),
                     _ => {
                         ui.centered_and_justified(|ui| {
                             ui.label(RichText::new("Feature coming soon...").size(18.0));
@@ -262,6 +266,17 @@ impl Dashboard {
 
     pub fn is_bottom_panel_visible(&self) -> bool {
         self.panel_layout.is_bottom_panel_visible()
+    }
+
+    fn show_run_history_content(&mut self, ui: &mut egui::Ui) {
+        // Run History page - use full width without data panel
+        ui.set_min_height(ui.available_height());
+        
+        // Add some padding
+        ui.add_space(10.0);
+        
+        // Show run history component
+        self.run_history.show(ui);
     }
 
     fn torque_hp_widget(
